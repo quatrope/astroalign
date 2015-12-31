@@ -18,14 +18,14 @@ class TestAlign(unittest.TestCase):
         w = 512
         kh = 10
         kw = 10
-        noise_level = 100
-        num_stars = 500
+        noise_level = 0
+        num_stars = 1500
         psf = gauss(shape=(20,20), sx=1.5, sy=1.5)
 
         self.image_ref = np.random.poisson(noise_level, size=(h+kh,w+kw)).astype('float64')
         self.star_rows = np.random.randint(low=0, high=h, size=(num_stars,))
         self.star_cols = np.random.randint(low=0, high=w, size=(num_stars,))
-        self.star_fluxes = 1.0*np.random.exponential(6.*noise_level, size=(num_stars,))
+        self.star_fluxes = 1.0*np.random.exponential(160., size=(num_stars,))
         self.image_ref[self.star_rows, self.star_cols] += self.star_fluxes
         self.image_ref = signal.convolve2d(self.image_ref, psf, mode='same')[kh//2:-kh//2,kw//2:-kw//2]
 
@@ -35,26 +35,33 @@ class TestAlign(unittest.TestCase):
 
         self.star_new_rows = []
         self.star_new_cols = []
-        for x, y in zip(self.star_cols, self.star_rows):
+        self.star_new_fluxes = []
+        for x, y, flux in zip(self.star_cols, self.star_rows, self.star_fluxes):
             x -= w / 2
             y -= h / 2
             new_x = x * np.cos(self.rot_angle) - y * np.sin(self.rot_angle) + self.x_offset
             new_y = x * np.sin(self.rot_angle) + y * np.cos(self.rot_angle) + self.y_offset
-            self.star_new_rows.append(new_x)
-            self.star_new_cols.append(new_y)
+            new_x += w/2
+            new_y += h/2
+            if (new_x > 0 and new_x < w and new_y > 0 and new_y < h):
+                self.star_new_rows.append(new_x)
+                self.star_new_cols.append(new_y)
+                self.star_new_fluxes.append(flux)
 
         self.star_new_rows = np.array(self.star_new_rows).astype(int)
         self.star_new_cols = np.array(self.star_new_cols).astype(int)
 
         from scipy import signal
         self.image = np.random.poisson(noise_level*1.5, size=(h+kh,w+kw)).astype('float64')
-        self.image[self.star_new_rows, self.star_new_cols] += self.star_fluxes
+        self.image[self.star_new_rows, self.star_new_cols] += self.star_new_fluxes
         self.image = signal.convolve2d(self.image, psf, mode='same')[kh//2:-kh//2,kw//2:-kw//2]
 
     def test_align(self):
+        np.save("image", self.image)
+        np.save("image_ref", self.image_ref)
         image_aligned = align.alignImage(self.image, self.image_ref)
-        diff = np.linalg.norm(image_aligned - self.image_ref)
-        self.assertLess(diff, 1E-6)
+        error = np.linalg.norm(image_aligned - self.image_ref)
+        self.assertLess(error, 1E-6)
 
     def tearDown(self):
         self.image = None
