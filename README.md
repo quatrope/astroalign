@@ -13,6 +13,8 @@ Asterism matching is more robust and closer to the human way of matching images.
 
 Astro align can match images of very different field of view, point-spread functions, seeing and atmospheric conditions.
 
+***
+
 *This package is inspired by the [astrometry.net](http://astrometry.net) program*
 
 Author: Martin Beroiz
