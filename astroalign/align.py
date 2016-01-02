@@ -187,6 +187,7 @@ def alignImage(image, image_ref):
         aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
     return aligned_image
 
+
 def findSources(image):
     """Return sources (x, y) sorted by brightness.
     """
