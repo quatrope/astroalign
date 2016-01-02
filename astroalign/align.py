@@ -187,29 +187,6 @@ def alignImage(image, image_ref):
         aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
     return aligned_image
 
-
-def bkgNoiseSigma(dataImg, noiseLvl = 3.0):
-    """Return background mean and std. dev. of sky background.
-
-    Calculate the background (sky) mean value and a measure of its standard deviation.
-    Background is considered anything below 'noiseLvl' sigmas.
-    goodPixMask is a mask containing the good pixels that should be considered.
-    Return mean, std_dev
-    """
-    m = dataImg.mean()
-    s = dataImg.std()
-
-    prevSgm = 2*s #This will make the first while condition true
-    tol = 1E-2
-    while abs(prevSgm - s)/s > tol:
-        prevSgm = s
-        bkgMask = np.logical_and(dataImg < m + noiseLvl*s, dataImg > m - noiseLvl*s)
-        #The 1.*m hack is to force m to be a float, instead of possibly a masked ndarray
-        m, s = 1.*dataImg[bkgMask].mean(), dataImg[bkgMask].std()
-
-    return m, s
-
-
 def findSources(image):
     """Return sources (x, y) sorted by brightness.
     """
