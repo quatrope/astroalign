@@ -14,18 +14,18 @@ def gauss(shape = (10,10), center=None, sx=2, sy=2):
 class TestAlign(unittest.TestCase):
     def setUp(self):
         from scipy import signal
-        h = 512
-        w = 512
+        self.h = 512
+        self.w = 512
         kh = 10
         kw = 10
         noise_level = 0
         num_stars = 1500
         psf = gauss(shape=(20,20), sx=1.5, sy=1.5)
 
-        self.image_ref = np.random.poisson(noise_level, size=(h+kh,w+kw)).astype('float64')
-        self.star_rows = np.random.randint(low=0, high=h, size=(num_stars,))
-        self.star_cols = np.random.randint(low=0, high=w, size=(num_stars,))
-        self.star_fluxes = 1.0*np.random.exponential(160., size=(num_stars,))
+        self.image_ref = np.random.poisson(noise_level, size=(self.h+kh,self.w+kw)).astype('float64')
+        self.star_rows = np.random.randint(low=0, high=self.h, size=(num_stars,))
+        self.star_cols = np.random.randint(low=0, high=self.w, size=(num_stars,))
+        self.star_fluxes = 1.0*np.random.exponential(1600., size=(num_stars,))
         self.image_ref[self.star_rows, self.star_cols] += self.star_fluxes
         self.image_ref = signal.convolve2d(self.image_ref, psf, mode='same')[kh//2:-kh//2,kw//2:-kw//2]
 
@@ -37,31 +37,47 @@ class TestAlign(unittest.TestCase):
         self.star_new_cols = []
         self.star_new_fluxes = []
         for x, y, flux in zip(self.star_cols, self.star_rows, self.star_fluxes):
-            x -= w / 2
-            y -= h / 2
+            x -= self.w/2
+            y -= self.h/2
             new_x = x * np.cos(self.rot_angle) - y * np.sin(self.rot_angle) + self.x_offset
             new_y = x * np.sin(self.rot_angle) + y * np.cos(self.rot_angle) + self.y_offset
-            new_x += w/2
-            new_y += h/2
-            if (new_x > 0 and new_x < w and new_y > 0 and new_y < h):
-                self.star_new_rows.append(new_x)
-                self.star_new_cols.append(new_y)
+            new_x += self.w/2
+            new_y += self.h/2
+            if (new_x > 0 and new_x < self.w and new_y > 0 and new_y < self.h):
+                self.star_new_cols.append(new_x)
+                self.star_new_rows.append(new_y)
                 self.star_new_fluxes.append(flux)
 
         self.star_new_rows = np.array(self.star_new_rows).astype(int)
         self.star_new_cols = np.array(self.star_new_cols).astype(int)
 
         from scipy import signal
-        self.image = np.random.poisson(noise_level*1.5, size=(h+kh,w+kw)).astype('float64')
+        self.image = np.random.poisson(noise_level, size=(self.h+kh,self.w+kw)).astype('float64')
         self.image[self.star_new_rows, self.star_new_cols] += self.star_new_fluxes
         self.image = signal.convolve2d(self.image, psf, mode='same')[kh//2:-kh//2,kw//2:-kw//2]
 
-    def test_align(self):
+    def test_findAffineTransform(self):
+        star_pos = np.array(zip(self.star_cols, self.star_rows))
+        star_new_pos = np.array(zip(self.star_new_cols, self.star_new_rows))
+
+        star_pos = star_pos[np.argsort(self.star_fluxes)]
+        star_new_pos = star_new_pos[np.argsort(self.star_new_fluxes)]
+
+        M = align.findAffineTransform(star_new_pos[50::-1], star_pos[70::-1])
+        alpha = self.rot_angle
+        xoff_corrected = (1 - np.cos(alpha))*self.w/2 + np.sin(alpha)*self.h/2 + self.x_offset
+        yoff_corrected = -np.sin(alpha)*self.w/2 + (1 - np.cos(alpha))*self.h/2 + self.y_offset
+        Mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected], \
+                          [np.sin(alpha), np.cos(alpha), yoff_corrected]])
+        self.assertLess(np.linalg.norm(M-Mtrue)/np.linalg.norm(Mtrue), 1E-2)
+
+    def test_alignImage(self):
         np.save("image", self.image)
         np.save("image_ref", self.image_ref)
         image_aligned = align.alignImage(self.image, self.image_ref)
-        error = np.linalg.norm(image_aligned - self.image_ref)
-        self.assertLess(error, 1E-6)
+        np.save("image_aligned", image_aligned)
+        error = np.linalg.norm(image_aligned - self.image)/np.linalg.norm(self.image)
+        self.assertLess(error, 0.5)
 
     def tearDown(self):
         self.image = None

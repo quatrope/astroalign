@@ -151,17 +151,15 @@ def alignImage(image, image_ref):
     
     from scipy import ndimage
 
-    if not isinstance(image, np.ma.MaskedArray):
-        image_ma = np.ma.array(image)
+    try:
+        import sep
+    except ImportError:
+        sourceFinder = findSources
     else:
-        image_ma = image
-    test_srcs = findSources(image_ma)[:50]
+        sourceFinder = findSourcesWithSEP
 
-    if not isinstance(image_ref, np.ma.MaskedArray):
-        image_ref_ma = np.ma.array(image_ref)
-    else:
-        image_ref_ma = image_ref
-    ref_sources = findSources(image_ref_ma)[:70]
+    test_srcs = sourceFinder(image)[:50]
+    ref_sources = sourceFinder(image_ref)[:70]
 
     M = findAffineTransform(test_srcs, ref_srcs = ref_sources)
 
@@ -184,20 +182,10 @@ def alignImage(image, image_ref):
     Mrcinv_offset = P.dot(Minv[:2,2])
 
     aligned_image = ndimage.interpolation.affine_transform(image_ref, Mrcinv_rot, offset=Mrcinv_offset, output_shape=image.shape)
-    aligned_image_mask = ndimage.interpolation.affine_transform(ref_image.mask, Mrcinv_rot, offset=Mrcinv_offset, output_shape=image_in.shape)
-    aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
+    if isinstance(image_ref, np.ma.MaskedArray): 
+        aligned_image_mask = ndimage.interpolation.affine_transform(image_ref.mask, Mrcinv_rot, offset=Mrcinv_offset, output_shape=image_in.shape)
+        aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
     return aligned_image
-
-
-def makeSourcesMask(dataImg, noiseLvl = 3.):
-
-    m, s = bkgNoiseSigma(dataImg, noiseLvl = noiseLvl)
-    srcsMask = dataImg > m + noiseLvl*s
-    if isinstance(srcsMask, np.ma.MaskedArray):
-        srcsMask = srcsMask.astype(bool)
-        srcsMask.set_fill_value(False)
-        srcsMask = srcsMask.filled()
-    return srcsMask
 
 
 def bkgNoiseSigma(dataImg, noiseLvl = 3.0):
@@ -216,27 +204,27 @@ def bkgNoiseSigma(dataImg, noiseLvl = 3.0):
     while abs(prevSgm - s)/s > tol:
         prevSgm = s
         bkgMask = np.logical_and(dataImg < m + noiseLvl*s, dataImg > m - noiseLvl*s)
-        if isinstance(bkgMask, np.ma.MaskedArray):
-            bkgMask = bkgMask.astype(bool)
-            bkgMask.set_fill_value(False)
-            bkgMask = bkgMask.filled()
-        m, s = dataImg[bkgMask].mean(), dataImg[bkgMask].std()
+        #The 1.*m hack is to force m to be a float, instead of possibly a masked ndarray
+        m, s = 1.*dataImg[bkgMask].mean(), dataImg[bkgMask].std()
 
     return m, s
 
 
 def findSources(image):
-    """Return sources sorted by brightness.
+    """Return sources (x, y) sorted by brightness.
     """
     from scipy import ndimage
     from skimage import exposure
+    from astropy.stats import mad_std
 
     img1 = image.copy()
-    src_mask = makeSourcesMask(img1)
+    m, s = np.median(image), mad_std(image)
+    src_mask = image > m + 3.0*s
+    #set the background to the min value of the sources
     img1[~src_mask] = img1[src_mask].min()
+    #this rescales (min,max) to (0,1)
     img1 = exposure.rescale_intensity(img1)
     img1[~src_mask] = 0.
-    img1.set_fill_value(0.)
 
     def obj_params_with_offset(img, labels, aslice, label_idx):
         y_offset = aslice[0].start
@@ -261,6 +249,19 @@ def findSources(image):
     lum = lum[lum[:,0].argsort()[::-1]]  #sort by brightness highest to smallest
 
     return lum[:,1:]
+
+
+def findSourcesWithSEP(img):
+    """Return sources (x, y) sorted by brightness. Use SEP package.
+    """
+    import sep
+    image = img.astype('float32')
+    bkg = sep.Background(image)
+    thresh = 3.*bkg.globalrms
+    sources = sep.extract(image - bkg.back(), thresh)
+    sources.sort(order='flux')
+    return np.array([[asrc['x'],asrc['y']] for asrc in sources[::-1]])
+
 
 
 
