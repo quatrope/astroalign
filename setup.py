@@ -6,7 +6,7 @@ setup(name='astroalign',
       author='Martin Beroiz',
       author_email='martinberoiz@gmail.com',
       url='http://martinberoiz.org',
-      packages=['astroalign',],
+      packages=['astroalign', ],
       install_requires=["numpy", "scipy", "astropy", "scikit-image"],
       test_suite='tests',
-     )
+      )
