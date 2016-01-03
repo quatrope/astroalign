@@ -80,10 +80,10 @@ class TestAlign(unittest.TestCase):
 
         m = align.find_affine_transform(star_new_pos[50::-1], star_pos[70::-1])
         alpha = self.rot_angle
-        xoff_corrected = (1 - np.cos(alpha)) * self.w / 2 + np.sin(alpha) * \
-            self.h / 2 + self.x_offset
-        yoff_corrected = -np.sin(alpha) * self.w / 2 + (1 - np.cos(alpha)) * \
-            self.h / 2 + self.y_offset
+        xoff_corrected = ((1 - np.cos(alpha)) * self.w / 2 + np.sin(alpha) *
+                          self.h / 2 + self.x_offset)
+        yoff_corrected = (-np.sin(alpha) * self.w / 2 + (1 - np.cos(alpha)) *
+                          self.h / 2 + self.y_offset)
         mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected],
                           [np.sin(alpha), np.cos(alpha), yoff_corrected]])
         self.assertLess(np.linalg.norm(m - mtrue, 1)
