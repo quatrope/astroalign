@@ -114,14 +114,14 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     """
     if len(test_srcs) < 3:
         raise Exception(
-            "Test sources has less than the minimum value of points (3).")
+            "Test sources are less than the minimum value of points (3).")
 
     if invariant_map is None:
         inv_map = InvariantTriangleMapping()
 
     if len(ref_srcs) < 3:
         raise Exception(
-            "Test sources has less than the minimum value of points (3).")
+            "Ref sources are less than the minimum value of points (3).")
     # generate_invariants should return a list of the invariant tuples for each
     # asterism and a corresponding list of the indices that make up the astrsm
     ref_invariants, ref_asterisms = \
