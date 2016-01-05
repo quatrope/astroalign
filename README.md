@@ -20,3 +20,5 @@ Astro align can match images of very different field of view, point-spread funct
 Author: Martin Beroiz
 
 <martinberoiz@gmail.com>
+
+[![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
