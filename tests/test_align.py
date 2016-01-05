@@ -3,7 +3,7 @@ import numpy as np
 from astroalign import align
 
 
-def gauss(shape=(10, 10), center=None, sx=2, sy=2):
+def gauss(shape=(11, 11), center=None, sx=2, sy=2):
     "Returns a Gaussian of given shape, normalized to 1."
     h, w = shape
     if center is None:
@@ -24,7 +24,7 @@ class TestAlign(unittest.TestCase):
         kw = 10  # kernel width
         noise_level = 500  # counts
         num_stars = 1500
-        psf = gauss(shape=(20, 20), sx=1.5, sy=1.5)
+        psf = gauss(shape=(21, 21), sx=1.5, sy=1.5)
 
         # Transformation parameters
         self.x_offset = 10
@@ -65,6 +65,9 @@ class TestAlign(unittest.TestCase):
         self.image_ref[self.ref_rows, self.ref_cols] += self.ref_flux
         self.image_ref = signal.convolve2d(self.image_ref, psf, mode='same')
         self.image_ref = self.image_ref[kh // 2: -kh // 2, kw // 2: -kw // 2]
+        # Adjust here the positions of rows and cols after cropping image
+        self.ref_cols -= kw // 2
+        self.ref_rows -= kh // 2
 
         newx, newy = [], []
         for x, y in zip(self.star_refx, self.star_refy):
@@ -93,20 +96,20 @@ class TestAlign(unittest.TestCase):
         self.image[self.new_rows, self.new_cols] += self.new_flux
         self.image = signal.convolve2d(self.image, psf, mode='same')
         self.image = self.image[kh // 2: -kh // 2, kw // 2: -kw // 2]
+        # Adjust here the positions of rows and cols after cropping image
+        self.new_cols -= kw // 2
+        self.new_rows -= kh // 2
 
-        self.star_pos = np.array(zip(self.ref_cols, self.ref_rows))
+        self.star_ref_pos = np.array(zip(self.ref_cols, self.ref_rows))
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
-        np.save("ref_cols", self.ref_cols)
-        np.save("ref_rows", self.ref_rows)
-        np.save("ref_flux", self.ref_flux)
 
     def test_find_affine_transform(self):
 
-        star_pos_b = self.star_pos[np.argsort(self.ref_flux)]
+        star_ref_pos_b = self.star_ref_pos[np.argsort(self.ref_flux)]
         star_new_pos_b = self.star_new_pos[np.argsort(self.new_flux)]
 
         m = align.find_affine_transform(star_new_pos_b[50::-1],
-                                        star_pos_b[70::-1])
+                                        star_ref_pos_b[70::-1])
         alpha = self.rot_angle
         xoff_corrected = ((1 - np.cos(alpha)) * self.w / 2 + np.sin(alpha) *
                           self.h / 2 + self.x_offset)
@@ -114,37 +117,47 @@ class TestAlign(unittest.TestCase):
                           self.h / 2 + self.y_offset)
         mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected],
                           [np.sin(alpha), np.cos(alpha), yoff_corrected]])
-        # Pass the test if less than 1% relative error in result
-        self.assertLess(np.linalg.norm(m - mtrue, 1)
-                        / np.linalg.norm(mtrue, 1), 1E-2)
+        # Pass the test if less than 2% relative error in result
+        rel_error = np.linalg.norm(m - mtrue, 1) / np.linalg.norm(mtrue, 1)
+        self.assertLess(rel_error, 2E-2)
 
     def test_align_image(self):
-        # image_aligned = align.align_image(self.image, self.image_ref)
-        np.save("image", self.image)
-        np.save("image_ref", self.image_ref)
         image_aligned = align.align_image(self.image, self.image_ref)
-        np.save("image_aligned", image_aligned)
         # pixel comparison is not good, doesn't work. Compare catalogs.
-        # error = np.linalg.norm(image_aligned - self.image)
-        #                        /np.linalg.norm(self.image)
-        # self.assertLess(error, 0.5)
-        self.assertEqual(1, 1)
+        full_algn = image_aligned.copy()
+        full_algn[image_aligned == 0] = np.median(image_aligned)
+        import sep
+        bkg = sep.Background(full_algn)
+        thresh = 3.0 * bkg.globalrms
+        allobjs = sep.extract(full_algn - bkg.back(), thresh)
+        allxy = np.array([[obj['x'], obj['y']] for obj in allobjs])
+
+        from scipy.spatial import KDTree
+        ref_coordtree = KDTree(self.star_new_pos)
+
+        # Compare here srcs list with self.star_ref_pos
+        num_sources = 0
+        for asrc in allxy:
+            found_source = ref_coordtree.query_ball_point(asrc, 3)
+            if found_source:
+                num_sources += 1
+        fraction_found = float(num_sources) / float(len(allxy))
+        self.assertGreater(fraction_found, 0.85)
 
     def test_find_sources(self):
         srcs = align.find_sources(self.image_ref)
 
         from scipy.spatial import KDTree
-        star_pos_b = self.star_pos[np.argsort(self.ref_flux)]
-        ref_coordtree = KDTree(star_pos_b[30::-1])
+        ref_coordtree = KDTree(self.star_ref_pos)
 
-        # Compare here srcs list with self.ref_rows and self.ref_cols
+        # Compare here srcs list with self.star_ref_pos
         num_sources = 0
-        for asrc in srcs[:20]:
-            found_source = ref_coordtree.query_ball_point(asrc, 5)
+        for asrc in srcs:
+            found_source = ref_coordtree.query_ball_point(asrc, 3)
             if found_source:
                 num_sources += 1
-        self.assertGreater(num_sources, 15)
-        print("Found %d of %d" % (num_sources, 20))
+        fraction_found = float(num_sources) / float(len(srcs))
+        self.assertGreater(fraction_found, 0.85)
 
     def tearDown(self):
         self.image = None
