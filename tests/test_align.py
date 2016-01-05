@@ -4,14 +4,15 @@ from astroalign import align
 
 
 def gauss(shape=(10, 10), center=None, sx=2, sy=2):
+    "Returns a Gaussian of given shape, normalized to 1."
     h, w = shape
     if center is None:
         center = ((h - 1) / 2., (w - 1) / 2.)
     x0, y0 = center
     x, y = np.meshgrid(range(w), range(h))
-    norm = np.sqrt(2 * np.pi * (sx ** 2) * (sy ** 2))
-    return np.exp(-0.5 * ((x - x0) ** 2 / sx ** 2 + (y - y0) ** 2 / sy ** 2))\
-        / norm
+    krnl = np.exp(-0.5 * ((x - x0) ** 2 / sx ** 2 + (y - y0) ** 2 / sy ** 2))
+    krnl /= krnl.sum()
+    return krnl
 
 
 class TestAlign(unittest.TestCase):
@@ -95,6 +96,9 @@ class TestAlign(unittest.TestCase):
 
         self.star_pos = np.array(zip(self.ref_cols, self.ref_rows))
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
+        np.save("ref_cols", self.ref_cols)
+        np.save("ref_rows", self.ref_rows)
+        np.save("ref_flux", self.ref_flux)
 
     def test_find_affine_transform(self):
 
@@ -110,6 +114,7 @@ class TestAlign(unittest.TestCase):
                           self.h / 2 + self.y_offset)
         mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected],
                           [np.sin(alpha), np.cos(alpha), yoff_corrected]])
+        # Pass the test if less than 1% relative error in result
         self.assertLess(np.linalg.norm(m - mtrue, 1)
                         / np.linalg.norm(mtrue, 1), 1E-2)
 
@@ -138,7 +143,7 @@ class TestAlign(unittest.TestCase):
             found_source = ref_coordtree.query_ball_point(asrc, 5)
             if found_source:
                 num_sources += 1
-        self.assertGreater(20 - num_sources, 15)
+        self.assertGreater(num_sources, 15)
         print("Found %d of %d" % (num_sources, 20))
 
     def tearDown(self):
