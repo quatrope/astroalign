@@ -12,7 +12,7 @@ install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
   - pip install tox
 script:
-  - tox -r
+  - tox
 env:
   - TOXENV=py27
   - TOXENV=style
