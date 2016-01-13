@@ -14,8 +14,6 @@ before_install:
   - ./miniconda.sh -b --prefix=~/miniconda
   - ~/miniconda/bin/conda update --yes conda
   - pip install --upgrade pip
-
-before_install:
   - pip install codecov
 
 install:
