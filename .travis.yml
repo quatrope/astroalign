@@ -11,13 +11,13 @@ env:
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
-  - ./miniconda.sh -b --prefix=~/miniconda
-  - ~/miniconda/bin/conda update --yes conda
+  - ./miniconda.sh -b
+  - ~/miniconda2/bin/conda update --yes conda
   - pip install --upgrade pip
   - pip install codecov
 
 install:
-  - ~/miniconda/bin/conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
+  - ~/miniconda2/bin/conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
   - pip install tox
 
 script:
