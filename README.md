@@ -1,5 +1,8 @@
 #ASTROALIGN
 
+[![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
+[![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
+
 **ASTROALIGN** is a simple package that will try to align two stellar astronomical images.
 
 It does so by finding similar 3-point asterisms (triangles) in both images and deducing the
@@ -21,4 +24,3 @@ Author: Martin Beroiz
 
 <martinberoiz@gmail.com>
 
-[![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
