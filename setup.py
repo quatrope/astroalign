@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(name='astroalign',
-      version='1.0a0',
+      version='1.0a1',
       description='Astrometric Alignment of Images',
       author='Martin Beroiz',
       author_email='martinberoiz@gmail.com',
-      url='http://martinberoiz.org',
+      url='https://github.com/toros-astro/astroalign',
       packages=['astroalign', ],
       install_requires=["numpy>=1.6.2",
                         "scipy>=0.15",

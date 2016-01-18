@@ -18,6 +18,27 @@ Astro align can match images of very different field of view, point-spread funct
 
 ***
 
+##Installation
+
+Using setuptools:
+
+    pip install astroalign
+
+or from this distribution with
+
+    python setup.py install
+
+***
+
+Usage example
+
+    >>> from astroalign import align
+    >>> aligned_image = align.align_image(image, image_ref)
+
+More information available on docstrings
+
+***
+
 *This package is inspired by the [astrometry.net](http://astrometry.net) program*
 
 Author: Martin Beroiz
