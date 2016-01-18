@@ -21,4 +21,4 @@ script:
   - coverage run --source=astroalign --omit astroalign/ransac.py setup.py test
 
 after_success:
-  - codecov --token=1922f613-9998-46a1-a056-2dd3875476fa
+  - codecov
