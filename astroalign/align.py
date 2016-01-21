@@ -216,16 +216,15 @@ def find_sources(image):
     """Return sources (x, y) sorted by brightness.
     """
     from scipy import ndimage
-    from skimage import exposure
     from astropy.stats import mad_std
 
-    img1 = image.copy()
+    img1 = image.copy().astype('float32')
     m, s = np.median(image), mad_std(image)
     src_mask = image > m + 3.0 * s
     # set the background to the min value of the sources
     img1[~src_mask] = img1[src_mask].min()
     # this rescales (min,max) to (0,1)
-    img1 = exposure.rescale_intensity(img1)
+    img1 = (img1.min() - img1) / (img1.min() - img1.max())
     img1[~src_mask] = 0.
 
     def obj_params_with_offset(img, labels, aslice, label_idx):
