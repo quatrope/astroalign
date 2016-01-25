@@ -204,11 +204,16 @@ def align_image(image, image_ref):
                                                offset=mrcinv_offset,
                                                output_shape=image.shape)
     if isinstance(image_ref, np.ma.MaskedArray):
-        aligned_image_mask = \
-            ndimage.interpolation.affine_transform(image_ref.mask, mrcinv_rot,
-                                                   offset=mrcinv_offset,
-                                                   output_shape=image.shape)
-        aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
+        # it could be that image_ref's mask is just set to False
+        if type(image_ref.mask) is np.ndarray:
+            aligned_image_mask = \
+                ndimage.interpolation.affine_transform(image_ref.mask,
+                                                       mrcinv_rot,
+                                                       offset=mrcinv_offset,
+                                                       output_shape=image.shape
+                                                       )
+            aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
+
     return aligned_image
 
 
@@ -257,7 +262,11 @@ def find_sources_with_sep(img):
     """Return sources (x, y) sorted by brightness. Use SEP package.
     """
     import sep
-    image = img.astype('float32')
+    if isinstance(img, np.ma.MaskedArray):
+        image = img.filled(fill_value=np.median(img)).astype('float32')
+    else:
+        image = img.astype('float32')
+
     bkg = sep.Background(image)
     thresh = 3. * bkg.globalrms
     sources = sep.extract(image - bkg.back(), thresh)

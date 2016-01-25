@@ -42,7 +42,7 @@ More information available on docstrings
 
 *This package is inspired by the [astrometry.net](http://astrometry.net) program*
 
-Author: Martin Beroiz
+TOROS Dev Team
 
 <martinberoiz@gmail.com>
 

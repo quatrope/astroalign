@@ -122,27 +122,65 @@ class TestAlign(unittest.TestCase):
         self.assertLess(rel_error, 2E-2)
 
     def test_align_image(self):
+        def compare_image(the_image):
+            """Return the fraction of sources found in the original image"""
+            # pixel comparison is not good, doesn't work. Compare catalogs.
+            if isinstance(the_image, np.ma.MaskedArray):
+                full_algn = the_image.filled(fill_value=np.median(the_image))\
+                    .astype('float32')
+            else:
+                full_algn = the_image.astype('float32')
+            full_algn[the_image == 0] = np.median(the_image)
+            import sep
+            bkg = sep.Background(full_algn)
+            thresh = 3.0 * bkg.globalrms
+            allobjs = sep.extract(full_algn - bkg.back(), thresh)
+            allxy = np.array([[obj['x'], obj['y']] for obj in allobjs])
+
+            from scipy.spatial import KDTree
+            ref_coordtree = KDTree(self.star_new_pos)
+
+            # Compare here srcs list with self.star_ref_pos
+            num_sources = 0
+            for asrc in allxy:
+                found_source = ref_coordtree.query_ball_point(asrc, 3)
+                if found_source:
+                    num_sources += 1
+            fraction_found = float(num_sources) / float(len(allxy))
+            return fraction_found
+
         image_aligned = align.align_image(self.image, self.image_ref)
-        # pixel comparison is not good, doesn't work. Compare catalogs.
-        full_algn = image_aligned.copy()
-        full_algn[image_aligned == 0] = np.median(image_aligned)
-        import sep
-        bkg = sep.Background(full_algn)
-        thresh = 3.0 * bkg.globalrms
-        allobjs = sep.extract(full_algn - bkg.back(), thresh)
-        allxy = np.array([[obj['x'], obj['y']] for obj in allobjs])
+        # Test that image returned is not masked
+        self.assertIs(type(image_aligned), np.ndarray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
 
-        from scipy.spatial import KDTree
-        ref_coordtree = KDTree(self.star_new_pos)
+        # Test masked arrays
+        # Make some masks...
+        mask = np.zeros(self.image.shape, dtype='bool')
+        mask[self.h / 10:self.h / 10 + 10, :] = True
+        mask_ref = np.zeros(self.image_ref.shape, dtype='bool')
+        mask[:, self.w / 10:self.w / 10 + 10] = True
+        image_masked = np.ma.array(self.image, mask=mask)
+        image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
-        # Compare here srcs list with self.star_ref_pos
-        num_sources = 0
-        for asrc in allxy:
-            found_source = ref_coordtree.query_ball_point(asrc, 3)
-            if found_source:
-                num_sources += 1
-        fraction_found = float(num_sources) / float(len(allxy))
-        self.assertGreater(fraction_found, 0.85)
+        # Test it works with masked image:
+        image_aligned = align.align_image(image_masked, self.image_ref)
+        self.assertIs(type(image_aligned), np.ndarray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
+
+        # Test it works with masked ref:
+        image_aligned = align.align_image(self.image, image_ref_masked)
+        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
+
+        # Test it works with both masked image and masked ref:
+        image_aligned = align.align_image(image_masked, image_ref_masked)
+        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
 
     def test_find_sources(self):
         srcs = align.find_sources(self.image_ref)
