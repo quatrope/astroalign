@@ -274,13 +274,7 @@ def find_sources_with_sep(img):
     except Exception as e:
         buff_message = 'internal pixel buffer full'
         if e.message[0:26] == buff_message:
-            sep.set_extract_pixstack = 500000
-    try:
-        sources = sep.extract(image - bkg.back(), thresh)
-    except Exception as e:
-        buff_message = 'internal pixel buffer full'
-        if e.message[0:26] == buff_message:
-            sep.set_extract_pixstack = 800000
+            sep.set_extract_pixstack = 600000
     
     sources.sort(order='flux')
     return np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
