@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 from astroalign import align
+import scipy
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -197,9 +198,109 @@ class TestAlign(unittest.TestCase):
         fraction_found = float(num_sources) / float(len(srcs))
         self.assertGreater(fraction_found, 0.85)
 
+class TestRANSAC(unittest.TestCase):
+    def test_ransac(self):
+
+        class LinearLeastSquaresModel:
+            """linear system solved using linear least squares
+
+            This class serves as an example that fulfills the model interface
+            needed by the ransac() function.
+
+            """
+            def __init__(self, input_columns, output_columns, debug=False):
+                self.input_columns = input_columns
+                self.output_columns = output_columns
+                self.debug = debug
+
+            def fit(self, data):
+                a = np.vstack([data[:, i] for i in self.input_columns]).T
+                b = np.vstack([data[:, i] for i in self.output_columns]).T
+                x, resids, rank, s = scipy.linalg.lstsq(a, b)
+                return x
+
+            def get_error(self, data, model):
+                a = np.vstack([data[:, i] for i in self.input_columns]).T
+                b = np.vstack([data[:, i] for i in self.output_columns]).T
+                b_fit = scipy.dot(a, model)
+                # sum squared error per row
+                err_per_point = np.sum((b - b_fit) ** 2, axis=1)
+                return err_per_point
+
+        # generate perfect input data
+        n_samples = 500
+        n_inputs = 1
+        n_outputs = 1
+        a_exact = 20 * np.random.random((n_samples, n_inputs))
+        # the model
+        perfect_fit = 60 * np.random.normal(size=(n_inputs, n_outputs))
+        b_exact = scipy.dot(a_exact, perfect_fit)
+        assert b_exact.shape == (n_samples, n_outputs)
+
+        # add a little gaussian noise (linear least squares alone should handle
+        # this well)
+        a_noisy = a_exact + np.random.normal(size=a_exact.shape)
+        b_noisy = b_exact + np.random.normal(size=b_exact.shape)
+
+        # add some outliers
+        n_outliers = 100
+        all_idxs = np.arange(a_noisy.shape[0])
+        np.random.shuffle(all_idxs)
+        outlier_idxs = all_idxs[:n_outliers]
+        non_outlier_idxs = all_idxs[n_outliers:]
+        a_noisy[outlier_idxs] = 20 * np.random.random((n_outliers, n_inputs))
+        b_noisy[outlier_idxs] = 50 * np.random.normal(size=(n_outliers,
+                                                            n_outputs))
+
+        # setup model
+        all_data = np.hstack((a_noisy, b_noisy))
+        input_columns = range(n_inputs)  # the first columns of the array
+        # the last columns of the array
+        output_columns = [n_inputs + i for i in range(n_outputs)]
+        debug = False
+        model = LinearLeastSquaresModel(input_columns, output_columns,
+                                        debug=debug)
+
+        linear_fit, resids, rank, s = \
+            scipy.linalg.lstsq(all_data[:, input_columns],
+                               all_data[:, output_columns])
+
+        # run RANSAC algorithm
+        ransac_fit, ransac_data = align.ransac(all_data, model, 50, 1000, 7e3,
+                                               300, debug=debug,
+                                               return_all=True)
+        # if 1:
+        #    import pylab
+        #
+        #    sort_idxs = np.argsort(a_exact[:, 0])
+        #    a_col0_sorted = a_exact[sort_idxs]  # maintain as rank-2 array
+        #
+        #    if 1:
+        #        pylab.plot(a_noisy[:, 0], b_noisy[:, 0], 'k.', label='data')
+        #        pylab.plot(a_noisy[ransac_data['inliers'], 0],
+        #                   b_noisy[ransac_data['inliers'], 0], 'bx',
+        #                   label='RANSAC data')
+        #    else:
+        #        pylab.plot(a_noisy[non_outlier_idxs, 0],
+        #                   b_noisy[non_outlier_idxs, 0], 'k.', label='noisy data')
+        #        pylab.plot(a_noisy[outlier_idxs, 0],
+        #                   b_noisy[outlier_idxs, 0], 'r.', label='outlier data')
+        #    pylab.plot(a_col0_sorted[:, 0],
+        #               np.dot(a_col0_sorted, ransac_fit)[:, 0],
+        #               label='RANSAC fit')
+        #    pylab.plot(a_col0_sorted[:, 0],
+        #               np.dot(a_col0_sorted, perfect_fit)[:, 0],
+        #               label='exact system')
+        #    pylab.plot(a_col0_sorted[:, 0],
+        #               np.dot(a_col0_sorted, linear_fit)[:, 0],
+        #               label='linear fit')
+        #    pylab.legend()
+        #    pylab.show()
+
     def tearDown(self):
         self.image = None
         self.image_ref = None
+
 
 
 if __name__ == "__main__":
