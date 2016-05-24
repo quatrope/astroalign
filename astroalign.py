@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.spatial import KDTree
 from itertools import combinations
-import ransac
 
 
 class InvariantTriangleMapping():
@@ -148,8 +147,8 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * min_matches_fraction))
-    best_m = ransac.ransac(matches, inv_model, 1, max_iter, max_pix_tol,
-                           min_matches)
+    best_m = ransac(matches, inv_model, 1, max_iter, max_pix_tol,
+                    min_matches)
     return best_m
 
 
@@ -275,15 +274,9 @@ def find_sources_with_sep(img):
         buff_message = 'internal pixel buffer full'
         if e.message[0:26] == buff_message:
             sep.set_extract_pixstack = 600000
-    
+
     sources.sort(order='flux')
     return np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
-
-
-import numpy
-import scipy  # use numpy if scipy unavailable
-import scipy.linalg  # use numpy if scipy unavailable
-
 
 
 # Copyright (c) 2004-2007, Andrew D. Straw. All rights reserved.
@@ -315,8 +308,6 @@ import scipy.linalg  # use numpy if scipy unavailable
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-__version__ = '0.1'
 
 
 def ransac(data, model, n, k, t, d, debug=False, return_all=False):
@@ -366,7 +357,7 @@ return bestfit
 """
     iterations = 0
     bestfit = None
-    # besterr = numpy.inf
+    # besterr = np.inf
     best_inlier_idxs = None
     while iterations < k:
         maybe_idxs, test_idxs = random_partition(n, data.shape[0])
@@ -378,14 +369,14 @@ return bestfit
         also_idxs = test_idxs[test_err < t]
         alsoinliers = data[also_idxs, :]
         if len(alsoinliers) > d:
-            betterdata = numpy.concatenate((maybeinliers, alsoinliers))
+            betterdata = np.concatenate((maybeinliers, alsoinliers))
             bestfit = model.fit(betterdata)
             # better_errs = model.get_error(betterdata, bettermodel)
-            # thiserr = numpy.mean(better_errs)
+            # thiserr = np.mean(better_errs)
             # if thiserr < besterr:
             # bestfit = bettermodel
             # besterr = thiserr
-            best_inlier_idxs = numpy.concatenate((maybe_idxs, also_idxs))
+            best_inlier_idxs = np.concatenate((maybe_idxs, also_idxs))
             break
         iterations += 1
     if bestfit is None:
@@ -398,12 +389,8 @@ return bestfit
 
 def random_partition(n, n_data):
     """return n random rows of data (and also the other len(data)-n rows)"""
-    all_idxs = numpy.arange(n_data)
-    numpy.random.shuffle(all_idxs)
+    all_idxs = np.arange(n_data)
+    np.random.shuffle(all_idxs)
     idxs1 = all_idxs[:n]
     idxs2 = all_idxs[n:]
     return idxs1, idxs2
-
-
-
-

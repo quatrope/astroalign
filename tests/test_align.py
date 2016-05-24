@@ -198,6 +198,7 @@ class TestAlign(unittest.TestCase):
         fraction_found = float(num_sources) / float(len(srcs))
         self.assertGreater(fraction_found, 0.85)
 
+
 class TestRANSAC(unittest.TestCase):
     def test_ransac(self):
 
@@ -300,7 +301,6 @@ class TestRANSAC(unittest.TestCase):
     def tearDown(self):
         self.image = None
         self.image_ref = None
-
 
 
 if __name__ == "__main__":
