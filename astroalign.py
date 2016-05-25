@@ -152,7 +152,7 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     return best_m
 
 
-def align_image(image, image_ref):
+def align_image(image, image_ref, n_test_src=50, n_ref_src=70, px_tol=2.):
     """Return an aligned image that coincides pixel to pixel with image_ref.
 
     align_image accepts a numpy array (masked or not) and returns a realigned
@@ -172,10 +172,10 @@ def align_image(image, image_ref):
     else:
         source_finder = find_sources_with_sep
 
-    test_srcs = source_finder(image)[:50]
-    ref_sources = source_finder(image_ref)[:70]
+    test_srcs = source_finder(image)[:n_test_src]
+    ref_sources = source_finder(image_ref)[:n_ref_src]
 
-    m = find_affine_transform(test_srcs, ref_srcs=ref_sources)
+    m = find_affine_transform(test_srcs, ref_srcs=ref_sources, max_pix_tol=px_tol)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation
@@ -273,7 +273,13 @@ def find_sources_with_sep(img):
     except Exception as e:
         buff_message = 'internal pixel buffer full'
         if e.message[0:26] == buff_message:
-            sep.set_extract_pixstack = 600000
+            sep.set_extract_pixstack(600000)
+        try:
+            sources = sep.extract(image - bkg.back(), thresh)
+        except Exception as e:
+            if e.message[0:26] == buff_message:
+                sep.set_extract_pixstack(900000)
+                sources = sep.extract(image - bkg.back(), thresh)
 
     sources.sort(order='flux')
     return np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
