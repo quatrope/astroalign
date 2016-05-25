@@ -33,8 +33,8 @@ or from this distribution with
 
 Usage example
 
-    >>> from astroalign import align
-    >>> aligned_image = align.align_image(image, image_ref)
+    >>> import astroalign as aa
+    >>> aligned_image = aa.align_image(image, image_ref)
 
 More information available on docstrings
 
