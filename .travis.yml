@@ -18,7 +18,7 @@ install:
 
 script:
   - python setup.py test
-  - coverage run --source=astroalign --omit setup.py test
+  - coverage run --source astroalign.py setup.py test
 
 after_success:
   - codecov
