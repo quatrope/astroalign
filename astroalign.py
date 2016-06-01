@@ -3,6 +3,9 @@ from scipy.spatial import KDTree
 from itertools import combinations
 
 
+__version__ = '1.0a3'
+
+
 class InvariantTriangleMapping():
 
     def invariantfeat(self, sources, ind1, ind2, ind3):
@@ -175,7 +178,8 @@ def align_image(image, image_ref, n_test_src=50, n_ref_src=70, px_tol=2.):
     test_srcs = source_finder(image)[:n_test_src]
     ref_sources = source_finder(image_ref)[:n_ref_src]
 
-    m = find_affine_transform(test_srcs, ref_srcs=ref_sources, max_pix_tol=px_tol)
+    m = find_affine_transform(test_srcs, ref_srcs=ref_sources,
+                              max_pix_tol=px_tol)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation
