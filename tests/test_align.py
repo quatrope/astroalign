@@ -161,7 +161,7 @@ class TestAlign(unittest.TestCase):
         mask = np.zeros(self.image.shape, dtype='bool')
         mask[self.h / 10:self.h / 10 + 10, :] = True
         mask_ref = np.zeros(self.image_ref.shape, dtype='bool')
-        mask[:, self.w / 10:self.w / 10 + 10] = True
+        mask_ref[:, self.w / 10:self.w / 10 + 10] = True
         image_masked = np.ma.array(self.image, mask=mask)
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
@@ -179,6 +179,20 @@ class TestAlign(unittest.TestCase):
 
         # Test it works with both masked image and masked ref:
         image_aligned = astroalign.align_image(image_masked, image_ref_masked)
+        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
+
+        # Test it works when given a masked array with no mask set
+        image_aligned = astroalign.align_image(np.ma.array(self.image),
+                                               self.image_ref)
+        self.assertIs(type(image_aligned), np.ndarray)
+        fraction = compare_image(image_aligned)
+        self.assertGreater(fraction, 0.85)
+
+        # Test it works when given a reference masked array with no mask set
+        image_aligned = astroalign.align_image(self.image,
+                                               np.ma.array(self.image_ref))
         self.assertIs(type(image_aligned), np.ma.MaskedArray)
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
