@@ -166,34 +166,38 @@ class TestAlign(unittest.TestCase):
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
         # Test it works with masked image:
-        image_aligned = astroalign.align_image(image_masked, self.image_ref)
-        self.assertIs(type(image_aligned), np.ndarray)
+        ref_input = self.image_ref
+        image_aligned = astroalign.align_image(image_masked, ref_input)
+        self.assertIs(type(image_aligned), type(ref_input))
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
 
         # Test it works with masked ref:
-        image_aligned = astroalign.align_image(self.image, image_ref_masked)
-        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        ref_input = image_ref_masked
+        image_aligned = astroalign.align_image(self.image, ref_input)
+        self.assertIs(type(image_aligned), type(ref_input))
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
 
         # Test it works with both masked image and masked ref:
-        image_aligned = astroalign.align_image(image_masked, image_ref_masked)
-        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        ref_input = image_ref_masked
+        image_aligned = astroalign.align_image(image_masked, ref_input)
+        self.assertIs(type(image_aligned), type(ref_input))
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
 
         # Test it works when given a masked array with no mask set
+        ref_input = self.image_ref
         image_aligned = astroalign.align_image(np.ma.array(self.image),
-                                               self.image_ref)
-        self.assertIs(type(image_aligned), np.ndarray)
+                                               ref_input)
+        self.assertIs(type(image_aligned), type(ref_input))
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
 
         # Test it works when given a reference masked array with no mask set
-        image_aligned = astroalign.align_image(self.image,
-                                               np.ma.array(self.image_ref))
-        self.assertIs(type(image_aligned), np.ma.MaskedArray)
+        ref_input = np.ma.array(self.image_ref)
+        image_aligned = astroalign.align_image(self.image, ref_input)
+        self.assertIs(type(image_aligned), type(ref_input))
         fraction = compare_image(image_aligned)
         self.assertGreater(fraction, 0.85)
 
