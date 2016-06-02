@@ -191,7 +191,7 @@ def align_image(image, image_ref, n_test_src=50, n_ref_src=70, px_tol=2.):
 
     Return aligned_image"""
 
-    from scipy import ndimage
+    from scipy.ndimage.interpolation import affine_transform
 
     try:
         import sep  # noqa
@@ -227,21 +227,27 @@ def align_image(image, image_ref, n_test_src=50, n_ref_src=70, px_tol=2.):
     mrcinv_rot = p.dot(m_inv[:2, :2]).dot(p)
     mrcinv_offset = p.dot(m_inv[:2, 2])
 
-    aligned_image = \
-        ndimage.interpolation.affine_transform(image_ref, mrcinv_rot,
-                                               offset=mrcinv_offset,
-                                               output_shape=image.shape)
+    aligned_image = affine_transform(image_ref, mrcinv_rot,
+                                     offset=mrcinv_offset,
+                                     output_shape=image.shape,
+                                     cval=np.median(image_ref)
+                                     )
     if isinstance(image_ref, np.ma.MaskedArray):
         # it could be that image_ref's mask is just set to False
         if type(image_ref.mask) is np.ndarray:
             aligned_image_mask = \
-                ndimage.interpolation.affine_transform(image_ref.mask,
-                                                       mrcinv_rot,
-                                                       offset=mrcinv_offset,
-                                                       output_shape=image.shape
-                                                       )
+                affine_transform(image_ref.mask.astype('float32'),
+                                 mrcinv_rot,
+                                 offset=mrcinv_offset,
+                                 output_shape=image.shape,
+                                 cval=1.0
+                                 )
+            aligned_image_mask = aligned_image_mask > 0.4
             aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
-
+        else:
+            # If image_ref is masked array with mask set to false, we return
+            # the same
+            aligned_image = np.ma.array(aligned_image)
     return aligned_image
 
 
