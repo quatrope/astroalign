@@ -150,7 +150,7 @@ class TestAlign(unittest.TestCase):
             fraction_found = float(num_sources) / float(len(allxy))
             return fraction_found
 
-        image_aligned = astroalign.align_image(self.image, self.image_ref)
+        image_aligned = astroalign.align_image(self.image_ref, self.image)
         # Test that image returned is not masked
         self.assertIs(type(image_aligned), np.ndarray)
         fraction = compare_image(image_aligned)
@@ -166,7 +166,7 @@ class TestAlign(unittest.TestCase):
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
         def testalignment(image_input, ref_input):
-            image_aligned = astroalign.align_image(image_input, ref_input)
+            image_aligned = astroalign.align_image(ref_input, image_input)
             self.assertIs(type(image_aligned), type(ref_input))
             fraction = compare_image(image_aligned)
             self.assertGreater(fraction, 0.85)
