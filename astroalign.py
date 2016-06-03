@@ -25,7 +25,7 @@ from scipy.spatial import KDTree
 from itertools import combinations
 
 
-__version__ = '1.0a3'
+__version__ = '1.0a4'
 
 
 class InvariantTriangleMapping():
