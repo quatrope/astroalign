@@ -23,13 +23,17 @@ Guide:
 .. toctree::
    :maxdepth: 2
 
-   installation.rst
-   tutorial.rst
-   masks.rst
+   installation
+
+   tutorial
+   
+   mask
+
+   code
+
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
