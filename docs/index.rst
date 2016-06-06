@@ -24,13 +24,11 @@ Guide:
 
 .. toctree::
    :maxdepth: 2
-
-   installation
-
-   tutorial
    
+   installation
+   tutorial
+   methods
    mask
-
    code
 
 
