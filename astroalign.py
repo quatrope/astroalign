@@ -180,7 +180,7 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     return best_m
 
 
-def align_image(reference_image, input_image,
+def align_image(input_image, reference_image,
                 n_test_src=50, n_ref_src=70, px_tol=2.):
     """Return an aligned image that coincides pixel to pixel with reference_image.
 
