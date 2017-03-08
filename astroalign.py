@@ -180,17 +180,18 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     return best_m
 
 
-def align_image(input_image, reference_image,
-                n_test_src=50, n_ref_src=70, px_tol=2.):
-    """Return an aligned image that coincides pixel to pixel with reference_image.
+def align_image(ref_image, img2transf,
+                n_ref_src=50, n_img_src=70, px_tol=2.):
+    """Return a transformed (aligned) image of img2transf that coincides
+    pixel to pixel with ref_image.
 
     align_image accepts a numpy array or a numpy masked array, and returns a
-    realigned image interpolated to coincide with reference_image.
+    realigned image interpolated to coincide with ref_image.
     Sometimes bad CCD sections can confuse the alignment.
     Bad pixels can be masked (True on bad) in a masked array to facilitate the
     process.
-    The returned image will be the same type as input_image.
-    Masks will be transformed the same way as input_image.
+    The returned image will be the same type as ref_image.
+    Masks will be transformed the same way as ref_image.
 
     Return aligned_image"""
 
@@ -203,10 +204,10 @@ def align_image(input_image, reference_image,
     else:
         source_finder = find_sources_with_sep
 
-    test_srcs = source_finder(input_image)[:n_test_src]
-    ref_sources = source_finder(reference_image)[:n_ref_src]
+    ref_srcs = source_finder(ref_image)[:n_ref_src]
+    img_sources = source_finder(img2transf)[:n_img_src]
 
-    m = find_affine_transform(test_srcs, ref_srcs=ref_sources,
+    m = find_affine_transform(ref_srcs, ref_srcs=img_sources,
                               max_pix_tol=px_tol)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
@@ -230,25 +231,25 @@ def align_image(input_image, reference_image,
     mrcinv_rot = p.dot(m_inv[:2, :2]).dot(p)
     mrcinv_offset = p.dot(m_inv[:2, 2])
 
-    aligned_image = affine_transform(reference_image, mrcinv_rot,
+    aligned_image = affine_transform(img2transf, mrcinv_rot,
                                      offset=mrcinv_offset,
-                                     output_shape=input_image.shape,
-                                     cval=np.median(reference_image)
+                                     output_shape=ref_image.shape,
+                                     cval=np.median(img2transf)
                                      )
-    if isinstance(reference_image, np.ma.MaskedArray):
-        # it could be that reference_image's mask is just set to False
-        if type(reference_image.mask) is np.ndarray:
+    if isinstance(img2transf, np.ma.MaskedArray):
+        # it could be that img2transf's mask is just set to False
+        if type(img2transf.mask) is np.ndarray:
             aligned_image_mask = \
-                affine_transform(reference_image.mask.astype('float32'),
+                affine_transform(img2transf.mask.astype('float32'),
                                  mrcinv_rot,
                                  offset=mrcinv_offset,
-                                 output_shape=input_image.shape,
+                                 output_shape=ref_image.shape,
                                  cval=1.0
                                  )
             aligned_image_mask = aligned_image_mask > 0.4
             aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
         else:
-            # If reference_image is masked array with mask set to false, we
+            # If img2transf is masked array with mask set to false, we
             # return the same
             aligned_image = np.ma.array(aligned_image)
     return aligned_image
