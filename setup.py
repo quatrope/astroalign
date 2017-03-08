@@ -1,13 +1,8 @@
 from setuptools import setup
-import os
-
-with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
-    README = readme.read()
 
 setup(name='astroalign',
-      version='1.0a4',
+      version='1.0a5',
       description='Astrometric Alignment of Images',
-      long_description=README,
       author='Martin Beroiz',
       author_email='martinberoiz@gmail.com',
       url='https://github.com/toros-astro/astroalign',
