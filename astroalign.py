@@ -190,8 +190,8 @@ def align_image(ref_image, img2transf,
     Sometimes bad CCD sections can confuse the alignment.
     Bad pixels can be masked (True on bad) in a masked array to facilitate the
     process.
-    The returned image will be the same type as ref_image.
-    Masks will be transformed the same way as ref_image.
+    The returned image will be the same type as img2transf.
+    Masks will be transformed the same way as img2transf.
 
     Return aligned_image"""
 
