@@ -1,4 +1,4 @@
-#ASTROALIGN
+# ASTROALIGN
 
 [![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
 [![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
@@ -21,7 +21,7 @@ It may not work, or work with special care, on images of extended objects with f
 
 ***
 
-##Installation
+## Installation
 
 Using setuptools:
 
@@ -38,7 +38,7 @@ Usage example
     >>> import astroalign as aa
     >>> aligned_image = aa.align_image(reference_image, image2transform)
 
-In this example image2transform will be interpolated by a transformation to coincide pixel to pixel with reference_img and stored in aligned_image.
+In this example image2transform will be interpolated by a transformation to coincide pixel to pixel with reference_image and stored in aligned_image.
 
 Sometimes, CCD defects can confuse the alignment. In cases where it's necessary you can mask out bad regions using a mask (True on bad) and pass a [numpy masked array](http://docs.scipy.org/doc/numpy/reference/maskedarray.html) that will ignore the masked pixels. 
 
