@@ -25,7 +25,10 @@ from scipy.spatial import KDTree
 from itertools import combinations
 
 
-__version__ = '1.0a5'
+__version__ = '1.0.0.dev0'
+
+
+NUMBER_CONTROL_POINTS = 50
 
 
 class InvariantTriangleMapping():
@@ -131,38 +134,61 @@ class InvariantTriangleMapping():
             return np.array(error)
 
 
-def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
-                          min_matches_fraction=0.8, invariant_map=None):
-    """
-    Return the 2 by 3 affine transformation M that maps pixel coordinates
-    (indices) from the reference image r = (x, y)
-    into the test image t = (x, y).
-    t = M * r
-    """
-    if len(test_srcs) < 3:
-        raise Exception(
-            "Test sources are less than the minimum value of points (3).")
+def transformation(source, target):
+    """Return the 2 by 3 affine transformation M that maps pixel x, y indices
+from the source image s = (x, y) into the target (destination) image t = (x, y)
+t = M * s.
+Return parameters (rotation_angle, translation_x, translation_y, scale_factor)
+from the transformation.
+Return an iterable of matched sources.
 
-    if invariant_map is None:
-        inv_map = InvariantTriangleMapping()
+source:
+  Either a numpy array of the source image to be transformed
+  or an interable of (x, y) coordinates of the source control points.
+target:
+  Either a numpy array of the target (destination) image
+  or an interable of (x, y) coordinates of the target control points.
+"""
 
-    if len(ref_srcs) < 3:
-        raise Exception(
-            "Ref sources are less than the minimum value of points (3).")
-    # generate_invariants should return a list of the invariant tuples for each
-    # asterism and a corresponding list of the indices that make up the astrsm
-    ref_invariants, ref_asterisms = \
-        inv_map.generate_invariants(ref_srcs, nearest_neighbors=7)
-    ref_invariant_tree = KDTree(ref_invariants)
+    if isinstance(source, np.ndarray):
+        # create source_list
+        pass
+    elif hasattr(source, '__getitem__'):
+        pass
+    else:
+        raise TypeError('Input type for source not supported.')
 
-    test_invariants, test_asterisms = \
-        inv_map.generate_invariants(test_srcs, nearest_neighbors=5)
-    test_invariant_tree = KDTree(test_invariants)
+    try:
+        import sep  # noqa
+    except ImportError:
+        source_finder = find_sources
+    else:
+        source_finder = find_sources_with_sep
 
-    # 0.03 is just an empirical number that returns about the same number of
-    # matches than inputs
+    source_controlp = source_finder(source)[:NUMBER_CONTROL_POINTS]
+    target_controlp = source_finder(target)[:NUMBER_CONTROL_POINTS]
+
+    if len(source_controlp) < 3:
+        raise Exception("Reference stars in source image are less than the "
+                        "minimum value of points (3).")
+    if len(target_controlp) < 3:
+        raise Exception("Reference stars in target image are less than the "
+                        "minimum value of points (3).")
+
+    inv_map = InvariantTriangleMapping()
+
+    source_invariants, source_asterisms = \
+        inv_map.generate_invariants(source_controlp, nearest_neighbors=5)
+    source_invariant_tree = KDTree(source_invariants)
+
+    target_invariants, target_asterisms = \
+        inv_map.generate_invariants(target_controlp, nearest_neighbors=5)
+    target_invariant_tree = KDTree(target_invariants)
+
+    # r = 0.03 is the maximum search distance, 0.03 is an empirical value that
+    # returns about the same number of matches than inputs
     matches_list = \
-        test_invariant_tree.query_ball_tree(ref_invariant_tree, 0.03)
+        target_invariant_tree.query_ball_tree(source_invariant_tree, r=0.03)
 
     matches = []
     # t1 is an asterism in test, t2 in ref
@@ -175,9 +201,10 @@ def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * min_matches_fraction))
-    best_m = ransac(matches, inv_model, 1, max_iter, max_pix_tol,
-                    min_matches)
-    return best_m
+    best_m = _ransac(matches, inv_model, 1, max_iter, max_pix_tol,
+                     min_matches)
+
+    return
 
 
 def align_image(ref_image, img2transf,
@@ -353,9 +380,11 @@ def find_sources_with_sep(img):
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#
+# Modified by Martin Beroiz
 
-
-def ransac(data, model, n, k, t, d, debug=False, return_all=False):
+def _ransac(data, model, n, k, t, d, debug=False, return_all=False):
     """fit model parameters to data using the RANSAC algorithm
 
 This implementation written from pseudocode found at
@@ -400,6 +429,15 @@ while iterations < k {
 return bestfit
 }}}
 """
+
+    def random_partition(n, n_data):
+        """return n random rows of data and also the other len(data)-n rows"""
+        all_idxs = np.arange(n_data)
+        np.random.shuffle(all_idxs)
+        idxs1 = all_idxs[:n]
+        idxs2 = all_idxs[n:]
+        return idxs1, idxs2
+
     iterations = 0
     bestfit = None
     # besterr = np.inf
@@ -430,12 +468,3 @@ return bestfit
         return bestfit, {'inliers': best_inlier_idxs}
     else:
         return bestfit
-
-
-def random_partition(n, n_data):
-    """return n random rows of data (and also the other len(data)-n rows)"""
-    all_idxs = np.arange(n_data)
-    np.random.shuffle(all_idxs)
-    idxs1 = all_idxs[:n]
-    idxs2 = all_idxs[n:]
-    return idxs1, idxs2
