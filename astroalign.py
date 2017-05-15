@@ -40,31 +40,35 @@ def _invariantfeat(x1, x2, x3):
     return [sides[2] / sides[1], sides[1] / sides[0]]
 
 
+def _arrangetriplet(sources, vertex_indices):
+    """Return vertex_indices ordered in an (a, b, c) form where:
+  a is the vertex defined by L1 & L2
+  b is the vertex defined by L2 & L3
+  c is the vertex defined by L3 & L1
+and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
+    ind1, ind2, ind3 = vertex_indices
+    x1, x2, x3 = sources[vertex_indices]
+
+    side_ind = np.array([(ind1, ind2), (ind2, ind3), (ind3, ind1)])
+    side_lengths = map(np.linalg.norm, (x1 - x2, x2 - x3, x3 - x1))
+    l1_ind, l2_ind, l3_ind = np.argsort(side_lengths)
+
+    # the most common vertex in the list of vertices for two sides is the
+    # point at which they meet.
+    from collections import Counter
+    count = Counter(side_ind[[l1_ind, l2_ind]].flatten())
+    a = count.most_common(1)[0][0]
+    count = Counter(side_ind[[l2_ind, l3_ind]].flatten())
+    b = count.most_common(1)[0][0]
+    count = Counter(side_ind[[l3_ind, l1_ind]].flatten())
+    c = count.most_common(1)[0][0]
+
+    return np.array([a, b, c])
+
+
 def _generate_invariants(sources, nearest_neighbors=5):
     """
 """
-    # Helping function
-    def arrangetriplet(sources, vertex_indices):
-        ""
-        side1 = np.array([vertex_indices[0], vertex_indices[1]])
-        side2 = np.array([vertex_indices[1], vertex_indices[2]])
-        side3 = np.array([vertex_indices[0], vertex_indices[2]])
-
-        sidelengths = [np.linalg.norm(sources[p1_ind] - sources[p2_ind])
-                       for p1_ind, p2_ind in [side1, side2, side3]]
-        lengths_arg = np.argsort(sidelengths)
-
-        # Sides sorted from shortest to longest
-        sides = np.array([side1, side2, side3])[lengths_arg]
-
-        # now I order the points inside the side this way:
-        # [(x2,x0),(x0,x1),(x1,x2)]
-        for i in range(-1, 2):
-            if sides[i][0] in sides[i + 1]:
-                # swap the points
-                sides[i] = sides[i][[1, 0]]
-
-        return sides[:, 1]
 
     inv = []
     triang_vrtx = []
@@ -76,7 +80,7 @@ def _generate_invariants(sources, nearest_neighbors=5):
                     for triplet in all_asterism_triang])
         triang_vrtx.extend(all_asterism_triang)
 
-    # Remove here many duplicate triangles for close-tight neighbors
+    # Remove here all possible duplicate triangles
     inv_uniq = np.array([elem for (pos, elem) in enumerate(inv)
                         if elem not in inv[pos + 1:]])
     triang_vrtx_uniq = [triang_vrtx[pos] for (pos, elem) in enumerate(inv)
@@ -85,7 +89,7 @@ def _generate_invariants(sources, nearest_neighbors=5):
     # This will order the vertices in the triangle in a determined way to
     # make a point to point correspondance with other triangles
     # (basically going around the triangle from smallest to largest side)
-    triang_vrtx_uniq = np.array([arrangetriplet(sources, triplet)
+    triang_vrtx_uniq = np.array([_arrangetriplet(sources, triplet)
                                  for triplet in triang_vrtx_uniq])
 
     return inv_uniq, triang_vrtx_uniq
