@@ -20,10 +20,7 @@ functions, seeing and atmospheric conditions.
 (c) Martin Beroiz
 """
 
-import numpy as np
-from scipy.spatial import KDTree
-from itertools import combinations
-
+import numpy as _np
 
 __version__ = '1.0.0.dev0'
 
@@ -33,10 +30,10 @@ PIXEL_TOL = 2
 MIN_MATCHES_FRACTION = 0.8
 
 
-def _invariantfeat(x1, x2, x3):
+def _invariantfeatures(x1, x2, x3):
     "Given 3 points x1, x2, x3, return the invariant features for the set."
-    sides = np.sort([np.linalg.norm(x1 - x2), np.linalg.norm(x2 - x3),
-                    np.linalg.norm(x1 - x3)])
+    sides = _np.sort([_np.linalg.norm(x1 - x2), _np.linalg.norm(x2 - x3),
+                     _np.linalg.norm(x1 - x3)])
     return [sides[2] / sides[1], sides[1] / sides[0]]
 
 
@@ -49,9 +46,9 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
     ind1, ind2, ind3 = vertex_indices
     x1, x2, x3 = sources[vertex_indices]
 
-    side_ind = np.array([(ind1, ind2), (ind2, ind3), (ind3, ind1)])
-    side_lengths = map(np.linalg.norm, (x1 - x2, x2 - x3, x3 - x1))
-    l1_ind, l2_ind, l3_ind = np.argsort(side_lengths)
+    side_ind = _np.array([(ind1, ind2), (ind2, ind3), (ind3, ind1)])
+    side_lengths = map(_np.linalg.norm, (x1 - x2, x2 - x3, x3 - x1))
+    l1_ind, l2_ind, l3_ind = _np.argsort(side_lengths)
 
     # the most common vertex in the list of vertices for two sides is the
     # point at which they meet.
@@ -63,39 +60,42 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
     count = Counter(side_ind[[l3_ind, l1_ind]].flatten())
     c = count.most_common(1)[0][0]
 
-    return np.array([a, b, c])
+    return _np.array([a, b, c])
 
 
 def _generate_invariants(sources, nearest_neighbors=5):
     """
 """
+    from scipy.spatial import KDTree
+    from itertools import combinations
+    from functools import partial
+    arrange = partial(_arrangetriplet, sources=sources)
 
     inv = []
     triang_vrtx = []
     coordtree = KDTree(sources)
     for asrc in sources:
         __, indx = coordtree.query(asrc, 5)
-        all_asterism_triang = [list(cmb) for cmb in combinations(indx, 3)]
-        inv.extend([_invariantfeat(*sources[triplet])
-                    for triplet in all_asterism_triang])
+
+        # Generate all possible triangles with the 5 indx provided, and store
+        # them with the order (a, b, c) defined in _arrangetriplet
+        all_asterism_triang = [arrange(vertex_indices=list(cmb))
+                               for cmb in combinations(indx, 3)]
         triang_vrtx.extend(all_asterism_triang)
 
-    # Remove here all possible duplicate triangles
-    inv_uniq = np.array([elem for (pos, elem) in enumerate(inv)
-                        if elem not in inv[pos + 1:]])
-    triang_vrtx_uniq = [triang_vrtx[pos] for (pos, elem) in enumerate(inv)
-                        if elem not in inv[pos + 1:]]
+        inv.extend([_invariantfeatures(*sources[triplet])
+                    for triplet in all_asterism_triang])
 
-    # This will order the vertices in the triangle in a determined way to
-    # make a point to point correspondance with other triangles
-    # (basically going around the triangle from smallest to largest side)
-    triang_vrtx_uniq = np.array([_arrangetriplet(sources, triplet)
-                                 for triplet in triang_vrtx_uniq])
+    # Remove here all possible duplicate triangles
+    uniq_ind = [pos for (pos, elem) in enumerate(inv)
+                if elem not in inv[pos + 1:]]
+    inv_uniq = _np.array(inv)[uniq_ind]
+    triang_vrtx_uniq = _np.array(triang_vrtx)[uniq_ind]
 
     return inv_uniq, triang_vrtx_uniq
 
 
-class MatchTransform:
+class _MatchTransform:
     def __init__(self, ref_srcs, target_srcs):
         self.ref = ref_srcs
         self.target = target_srcs
@@ -103,7 +103,7 @@ class MatchTransform:
     def fit(self, data):
         # numpy arrays require an explicit 'in' method
         def in_np_array(elem, arr):
-            return np.any([np.all(elem == el) for el in arr])
+            return _np.any([_np.all(elem == el) for el in arr])
 
         # Collect all matches, forget triangle info
         d1, d2, d3 = data.shape
@@ -118,16 +118,16 @@ class MatchTransform:
                 x_t, y_t = self.target[ind_t]
                 m.extend([[x_r, y_r, 1, 0], [y_r, -x_r, 0, 1]])
                 b.extend([x_t, y_t])
-        m = np.array(m)
-        b = np.array(b)
-        sol, resid, rank, sv = np.linalg.lstsq(m, b.T)
+        m = _np.array(m)
+        b = _np.array(b)
+        sol, resid, rank, sv = _np.linalg.lstsq(m, b.T)
         # lc,s is l (scaling) times cos,sin(alpha); alpha is the rot angle
         # ltx,y is l (scaling) times the translation in the x,y direction
         lc = sol.item(0)
         ls = sol.item(1)
         ltx = sol.item(2)
         lty = sol.item(3)
-        approxm = np.array([[lc, ls, ltx], [-ls, lc, lty]])
+        approxm = _np.array([[lc, ls, ltx], [-ls, lc, lty]])
         return approxm
 
     def get_error(self, data, approxm):
@@ -137,10 +137,10 @@ class MatchTransform:
             for ind_r, ind_t in amatch:
                 x = self.ref[ind_r]
                 y = self.target[ind_t]
-                y_fit = approxm.dot(np.append(x, 1))
-                max_err = max(max_err, np.linalg.norm(y - y_fit))
+                y_fit = approxm.dot(_np.append(x, 1))
+                max_err = max(max_err, _np.linalg.norm(y - y_fit))
             error.append(max_err)
-        return np.array(error)
+        return _np.array(error)
 
 
 def get_transform(source, target):
@@ -158,6 +158,7 @@ target:
   Either a numpy array of the target (destination) image
   or an interable of (x, y) coordinates of the target control points.
 """
+    from scipy.spatial import KDTree
 
     try:
         import sep  # noqa
@@ -169,7 +170,7 @@ target:
     try:
         if len(source[0]) == 2:
             # Assume it's a list of (x, y) pairs
-            source_controlp = np.array(source)[:MAX_CONTROL_POINTS]
+            source_controlp = _np.array(source)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
             source_controlp = source_finder(source)[:MAX_CONTROL_POINTS]
@@ -179,7 +180,7 @@ target:
     try:
         if len(target[0]) == 2:
             # Assume it's a list of (x, y) pairs
-            target_controlp = np.array(target)[:MAX_CONTROL_POINTS]
+            target_controlp = _np.array(target)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
             target_controlp = source_finder(target)[:MAX_CONTROL_POINTS]
@@ -210,11 +211,11 @@ target:
     matches = []
     # t1 is an asterism in source, t2 in target
     for t1, t2_list in zip(source_asterisms, matches_list):
-        for t2 in np.array(target_asterisms)[t2_list]:
+        for t2 in _np.array(target_asterisms)[t2_list]:
             matches.append(zip(t2, t1))
-    matches = np.array(matches)
+    matches = _np.array(matches)
 
-    inv_model = MatchTransform(target_controlp, source_controlp)
+    inv_model = _MatchTransform(target_controlp, source_controlp)
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
@@ -257,9 +258,9 @@ def align_image(source, target):
     # In particular, affine_transform() requires the inverse transformation
     # that registration returns but for (row, col) instead of (x,y)
     def inverse_transform(m):
-        m_rot_inv = np.linalg.inv(m[:2, :2])
+        m_rot_inv = _np.linalg.inv(m[:2, :2])
         m_offset_inv = -m_rot_inv.dot(m[:2, 2])
-        m_inv = np.zeros(m.shape)
+        m_inv = _np.zeros(m.shape)
         m_inv[:2, :2] = m_rot_inv
         m_inv[:2, 2] = m_offset_inv
         if m.shape == (3, 3):
@@ -268,18 +269,18 @@ def align_image(source, target):
 
     m_inv = inverse_transform(m)
     # p will transform from (x,y) to (row, col)=(y,x)
-    p = np.array([[0, 1], [1, 0]])
+    p = _np.array([[0, 1], [1, 0]])
     mrcinv_rot = p.dot(m_inv[:2, :2]).dot(p)
     mrcinv_offset = p.dot(m_inv[:2, 2])
 
     aligned_image = affine_transform(source, mrcinv_rot,
                                      offset=mrcinv_offset,
                                      output_shape=target.shape,
-                                     cval=np.median(source)
+                                     cval=_np.median(source)
                                      )
-    if isinstance(source, np.ma.MaskedArray):
+    if isinstance(source, _np.ma.MaskedArray):
         # it could be that source's mask is just set to False
-        if type(source.mask) is np.ndarray:
+        if type(source.mask) is _np.ndarray:
             aligned_image_mask = \
                 affine_transform(source.mask.astype('float32'),
                                  mrcinv_rot,
@@ -288,11 +289,12 @@ def align_image(source, target):
                                  cval=1.0
                                  )
             aligned_image_mask = aligned_image_mask > 0.4
-            aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
+            aligned_image = _np.ma.array(aligned_image,
+                                         mask=aligned_image_mask)
         else:
             # If source is masked array with mask set to false, we
             # return the same
-            aligned_image = np.ma.array(aligned_image)
+            aligned_image = _np.ma.array(aligned_image)
     return aligned_image
 
 
@@ -303,7 +305,7 @@ def _find_sources(image):
     from astropy.stats import mad_std
 
     img1 = image.copy().astype('float32')
-    m, s = np.median(image), mad_std(image)
+    m, s = _np.median(image), mad_std(image)
     src_mask = image > m + 3.0 * s
     # set the background to the min value of the sources
     img1[~src_mask] = img1[src_mask].min()
@@ -329,7 +331,7 @@ def _find_sources(image):
     all_objects = [[ind + 1, aslice] for ind, aslice
                    in enumerate(ndimage.find_objects(srcs_labels))
                    if srcs_labels[aslice].shape != (1, 1)]
-    lum = np.array([obj_params_with_offset(img1, srcs_labels, aslice, lab_idx)
+    lum = _np.array([obj_params_with_offset(img1, srcs_labels, aslice, lab_idx)
                     for lab_idx, aslice in all_objects])
 
     lum = lum[lum[:, 0].argsort()[::-1]]  # sort by brightness descending order
@@ -341,8 +343,8 @@ def _find_sources_with_sep(img):
     """Return sources (x, y) sorted by brightness. Use SEP package.
     """
     import sep
-    if isinstance(img, np.ma.MaskedArray):
-        image = img.filled(fill_value=np.median(img)).astype('float32')
+    if isinstance(img, _np.ma.MaskedArray):
+        image = img.filled(fill_value=_np.median(img)).astype('float32')
     else:
         image = img.astype('float32')
 
@@ -362,7 +364,7 @@ def _find_sources_with_sep(img):
                 sources = sep.extract(image - bkg.back(), thresh)
 
     sources.sort(order='flux')
-    return np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
+    return _np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
 
 
 # Copyright (c) 2004-2007, Andrew D. Straw. All rights reserved.
@@ -446,15 +448,15 @@ return bestfit
 
     def random_partition(n, n_data):
         """return n random rows of data and also the other len(data)-n rows"""
-        all_idxs = np.arange(n_data)
-        np.random.shuffle(all_idxs)
+        all_idxs = _np.arange(n_data)
+        _np.random.shuffle(all_idxs)
         idxs1 = all_idxs[:n]
         idxs2 = all_idxs[n:]
         return idxs1, idxs2
 
     iterations = 0
     bestfit = None
-    # besterr = np.inf
+    # besterr = _np.inf
     best_inlier_idxs = None
     while iterations < k:
         maybe_idxs, test_idxs = random_partition(n, data.shape[0])
@@ -466,14 +468,14 @@ return bestfit
         also_idxs = test_idxs[test_err < t]
         alsoinliers = data[also_idxs, :]
         if len(alsoinliers) > d:
-            betterdata = np.concatenate((maybeinliers, alsoinliers))
+            betterdata = _np.concatenate((maybeinliers, alsoinliers))
             bestfit = model.fit(betterdata)
             # better_errs = model.get_error(betterdata, bettermodel)
-            # thiserr = np.mean(better_errs)
+            # thiserr = _np.mean(better_errs)
             # if thiserr < besterr:
             # bestfit = bettermodel
             # besterr = thiserr
-            best_inlier_idxs = np.concatenate((maybe_idxs, also_idxs))
+            best_inlier_idxs = _np.concatenate((maybe_idxs, also_idxs))
             break
         iterations += 1
     if bestfit is None:
