@@ -29,6 +29,7 @@ __version__ = '1.0.0.dev0'
 
 
 MAX_CONTROL_POINTS = 50
+PIXEL_TOL = 2
 
 
 class InvariantTriangleMapping():
@@ -154,9 +155,9 @@ target:
     try:
         import sep  # noqa
     except ImportError:
-        source_finder = find_sources
+        source_finder = _find_sources
     else:
-        source_finder = find_sources_with_sep
+        source_finder = _find_sources_with_sep
 
     try:
         if len(source[0]) == 2 and len(target[0]) == 2:
@@ -210,18 +211,17 @@ target:
     return best_m
 
 
-def align_image(ref_image, img2transf,
-                n_ref_src=50, n_img_src=70, px_tol=2.):
-    """Return a transformed (aligned) image of img2transf that coincides
-    pixel to pixel with ref_image.
+def align_image(source, target):
+    """Return a transformed (aligned) image of source that coincides
+    pixel to pixel with target.
 
     align_image accepts a numpy array or a numpy masked array, and returns a
-    realigned image interpolated to coincide with ref_image.
+    realigned image interpolated to coincide with target.
     Sometimes bad CCD sections can confuse the alignment.
     Bad pixels can be masked (True on bad) in a masked array to facilitate the
     process.
-    The returned image will be the same type as img2transf.
-    Masks will be transformed the same way as img2transf.
+    The returned image will be the same type as source.
+    Masks will be transformed the same way as source.
 
     Return aligned_image"""
 
@@ -230,15 +230,15 @@ def align_image(ref_image, img2transf,
     try:
         import sep  # noqa
     except ImportError:
-        source_finder = find_sources
+        source_finder = _find_sources
     else:
-        source_finder = find_sources_with_sep
+        source_finder = _find_sources_with_sep
 
-    ref_srcs = source_finder(ref_image)[:n_ref_src]
-    img_sources = source_finder(img2transf)[:n_img_src]
+    ref_srcs = source_finder(target)[:MAX_CONTROL_POINTS]
+    img_sources = source_finder(source)[:MAX_CONTROL_POINTS]
 
     m = get_transform(source=ref_srcs, target=img_sources,
-                      max_pix_tol=px_tol)
+                      max_pix_tol=PIXEL_TOL)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation
@@ -261,31 +261,31 @@ def align_image(ref_image, img2transf,
     mrcinv_rot = p.dot(m_inv[:2, :2]).dot(p)
     mrcinv_offset = p.dot(m_inv[:2, 2])
 
-    aligned_image = affine_transform(img2transf, mrcinv_rot,
+    aligned_image = affine_transform(source, mrcinv_rot,
                                      offset=mrcinv_offset,
-                                     output_shape=ref_image.shape,
-                                     cval=np.median(img2transf)
+                                     output_shape=target.shape,
+                                     cval=np.median(source)
                                      )
-    if isinstance(img2transf, np.ma.MaskedArray):
-        # it could be that img2transf's mask is just set to False
-        if type(img2transf.mask) is np.ndarray:
+    if isinstance(source, np.ma.MaskedArray):
+        # it could be that source's mask is just set to False
+        if type(source.mask) is np.ndarray:
             aligned_image_mask = \
-                affine_transform(img2transf.mask.astype('float32'),
+                affine_transform(source.mask.astype('float32'),
                                  mrcinv_rot,
                                  offset=mrcinv_offset,
-                                 output_shape=ref_image.shape,
+                                 output_shape=target.shape,
                                  cval=1.0
                                  )
             aligned_image_mask = aligned_image_mask > 0.4
             aligned_image = np.ma.array(aligned_image, mask=aligned_image_mask)
         else:
-            # If img2transf is masked array with mask set to false, we
+            # If source is masked array with mask set to false, we
             # return the same
             aligned_image = np.ma.array(aligned_image)
     return aligned_image
 
 
-def find_sources(image):
+def _find_sources(image):
     """Return sources (x, y) sorted by brightness.
     """
     from scipy import ndimage
@@ -326,7 +326,7 @@ def find_sources(image):
     return lum[:, 1:]
 
 
-def find_sources_with_sep(img):
+def _find_sources_with_sep(img):
     """Return sources (x, y) sorted by brightness. Use SEP package.
     """
     import sep

@@ -149,7 +149,8 @@ class TestAlign(unittest.TestCase):
             fraction_found = float(num_sources) / float(len(allxy))
             return fraction_found
 
-        image_aligned = astroalign.align_image(self.image, self.image_ref)
+        image_aligned = astroalign.align_image(source=self.image_ref,
+                                               target=self.image)
         # Test that image returned is not masked
         self.assertIs(type(image_aligned), np.ndarray)
         fraction = compare_image(image_aligned)
@@ -165,7 +166,8 @@ class TestAlign(unittest.TestCase):
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
         def testalignment(image_input, ref_input):
-            image_aligned = astroalign.align_image(image_input, ref_input)
+            image_aligned = astroalign.align_image(source=ref_input,
+                                                   target=image_input)
             self.assertIs(type(image_aligned), type(ref_input))
             fraction = compare_image(image_aligned)
             self.assertGreater(fraction, 0.85)
@@ -189,7 +191,7 @@ class TestAlign(unittest.TestCase):
         testalignment(np.ma.array(self.image), np.ma.array(self.image_ref))
 
     def test_find_sources(self):
-        srcs = astroalign.find_sources(self.image_ref)
+        srcs = astroalign._find_sources(self.image_ref)
 
         from scipy.spatial import KDTree
         ref_coordtree = KDTree(self.star_ref_pos)
