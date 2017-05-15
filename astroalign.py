@@ -28,7 +28,7 @@ from itertools import combinations
 __version__ = '1.0.0.dev0'
 
 
-NUMBER_CONTROL_POINTS = 50
+MAX_CONTROL_POINTS = 50
 
 
 class InvariantTriangleMapping():
@@ -134,7 +134,8 @@ class InvariantTriangleMapping():
             return np.array(error)
 
 
-def transformation(source, target):
+def get_transform(source, target, max_pix_tol=2.,
+                  min_matches_fraction=0.8, invariant_map=None):
     """Return the 2 by 3 affine transformation M that maps pixel x, y indices
 from the source image s = (x, y) into the target (destination) image t = (x, y)
 t = M * s.
@@ -150,14 +151,6 @@ target:
   or an interable of (x, y) coordinates of the target control points.
 """
 
-    if isinstance(source, np.ndarray):
-        # create source_list
-        pass
-    elif hasattr(source, '__getitem__'):
-        pass
-    else:
-        raise TypeError('Input type for source not supported.')
-
     try:
         import sep  # noqa
     except ImportError:
@@ -165,9 +158,19 @@ target:
     else:
         source_finder = find_sources_with_sep
 
-    source_controlp = source_finder(source)[:NUMBER_CONTROL_POINTS]
-    target_controlp = source_finder(target)[:NUMBER_CONTROL_POINTS]
+    try:
+        if len(source[0]) == 2 and len(target[0]) == 2:
+            # Assume it's a list of (x, y) pairs
+            source_controlp = np.array(source)[:MAX_CONTROL_POINTS]
+            target_controlp = np.array(target)[:MAX_CONTROL_POINTS]
+        else:
+            # Assume it's a 2D image
+            source_controlp = source_finder(source)[:MAX_CONTROL_POINTS]
+            target_controlp = source_finder(target)[:MAX_CONTROL_POINTS]
+    except:
+        raise TypeError('Input type for source not supported.')
 
+    # Check for low number of reference points
     if len(source_controlp) < 3:
         raise Exception("Reference stars in source image are less than the "
                         "minimum value of points (3).")
@@ -188,23 +191,23 @@ target:
     # r = 0.03 is the maximum search distance, 0.03 is an empirical value that
     # returns about the same number of matches than inputs
     matches_list = \
-        target_invariant_tree.query_ball_tree(source_invariant_tree, r=0.03)
+        source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.03)
 
     matches = []
-    # t1 is an asterism in test, t2 in ref
-    for t1, t2_list in zip(test_asterisms, matches_list):
-        for t2 in np.array(ref_asterisms)[t2_list]:
+    # t1 is an asterism in source, t2 in target
+    for t1, t2_list in zip(source_asterisms, matches_list):
+        for t2 in np.array(target_asterisms)[t2_list]:
             matches.append(zip(t2, t1))
     matches = np.array(matches)
 
-    inv_model = inv_map.MatchTransform(ref_srcs, test_srcs)
+    inv_model = inv_map.MatchTransform(target_controlp, source_controlp)
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * min_matches_fraction))
     best_m = _ransac(matches, inv_model, 1, max_iter, max_pix_tol,
                      min_matches)
 
-    return
+    return best_m
 
 
 def align_image(ref_image, img2transf,
@@ -234,8 +237,8 @@ def align_image(ref_image, img2transf,
     ref_srcs = source_finder(ref_image)[:n_ref_src]
     img_sources = source_finder(img2transf)[:n_img_src]
 
-    m = find_affine_transform(ref_srcs, ref_srcs=img_sources,
-                              max_pix_tol=px_tol)
+    m = get_transform(source=ref_srcs, target=img_sources,
+                      max_pix_tol=px_tol)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation

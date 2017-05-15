@@ -104,13 +104,12 @@ class TestAlign(unittest.TestCase):
         self.star_ref_pos = np.array(zip(self.ref_cols, self.ref_rows))
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
 
-    def test_find_affine_transform(self):
-
+    def test_get_transform(self):
         star_ref_pos_b = self.star_ref_pos[np.argsort(self.ref_flux)]
         star_new_pos_b = self.star_new_pos[np.argsort(self.new_flux)]
 
-        m = astroalign.find_affine_transform(star_new_pos_b[50::-1],
-                                             star_ref_pos_b[70::-1])
+        m = astroalign.get_transform(star_new_pos_b[50::-1],
+                                     star_ref_pos_b[50::-1])
         alpha = self.rot_angle
         xoff_corrected = ((1 - np.cos(alpha)) * self.w / 2 + np.sin(alpha) *
                           self.h / 2 + self.x_offset)
