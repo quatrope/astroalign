@@ -28,6 +28,7 @@ __version__ = '1.0.0.dev0'
 MAX_CONTROL_POINTS = 50
 PIXEL_TOL = 2
 MIN_MATCHES_FRACTION = 0.8
+NUM_NEAREST_NEIGHBORS = 5
 
 
 def _invariantfeatures(x1, x2, x3):
@@ -63,7 +64,7 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
     return _np.array([a, b, c])
 
 
-def _generate_invariants(sources, nearest_neighbors=5):
+def _generate_invariants(sources):
     """
 """
     from scipy.spatial import KDTree
@@ -75,7 +76,7 @@ def _generate_invariants(sources, nearest_neighbors=5):
     triang_vrtx = []
     coordtree = KDTree(sources)
     for asrc in sources:
-        __, indx = coordtree.query(asrc, 5)
+        __, indx = coordtree.query(asrc, NUM_NEAREST_NEIGHBORS)
 
         # Generate all possible triangles with the 5 indx provided, and store
         # them with the order (a, b, c) defined in _arrangetriplet
@@ -195,23 +196,24 @@ target:
         raise Exception("Reference stars in target image are less than the "
                         "minimum value of points (3).")
 
-    source_invariants, source_asterisms = \
-        _generate_invariants(source_controlp, nearest_neighbors=5)
+    source_invariants, source_asterisms = _generate_invariants(source_controlp)
     source_invariant_tree = KDTree(source_invariants)
 
-    target_invariants, target_asterisms = \
-        _generate_invariants(target_controlp, nearest_neighbors=5)
+    target_invariants, target_asterisms = _generate_invariants(target_controlp)
     target_invariant_tree = KDTree(target_invariants)
 
     # r = 0.03 is the maximum search distance, 0.03 is an empirical value that
     # returns about the same number of matches than inputs
+    # matches_list is a list of lists such that for each element
+    # source_invariant_tree.data[i], matches_list[i] is a list of the indices
+    # of its neighbors in target_invariant_tree.data
     matches_list = \
         source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.03)
 
     matches = []
     # t1 is an asterism in source, t2 in target
     for t1, t2_list in zip(source_asterisms, matches_list):
-        for t2 in _np.array(target_asterisms)[t2_list]:
+        for t2 in target_asterisms[t2_list]:
             matches.append(zip(t2, t1))
     matches = _np.array(matches)
 
@@ -219,7 +221,8 @@ target:
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
-    best_m = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL, min_matches)
+    best_m, inliers = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
+                              min_matches)
 
     return best_m
 
@@ -400,7 +403,7 @@ def _find_sources_with_sep(img):
 #
 # Modified by Martin Beroiz
 
-def _ransac(data, model, n, k, t, d, debug=False, return_all=False):
+def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
     """fit model parameters to data using the RANSAC algorithm
 
 This implementation written from pseudocode found at
@@ -408,28 +411,29 @@ http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
 
 {{{
 Given:
-    data - a set of observed data points
-    model - a model that can be fitted to data points
-    n - the minimum number of data values required to fit the model
-    k - the maximum number of iterations allowed in the algorithm
-    t - a threshold value for determining when a data point fits a model
-    d - the number of close data values required to assert that a model fits
-        well to data
+    data: a set of observed data points
+    model: a model that can be fitted to data points
+    min_data_points: the minimum number of data values required to fit the
+        model
+    max_iter: the maximum number of iterations allowed in the algorithm
+    thresh: a threshold value to determine when a data point fits a model
+    min_matches: the min number of matches required to assert that a model
+        fits well to data
 Return:
-    bestfit - model parameters which best fit the data (or nil if no good model
+    bestfit: model parameters which best fit the data (or nil if no good model
               is found)
 iterations = 0
 bestfit = nil
 besterr = something really large
-while iterations < k {
+while iterations < max_iter {
     maybeinliers = n randomly selected values from data
     maybemodel = model parameters fitted to maybeinliers
     alsoinliers = empty set
     for every point in data not in maybeinliers {
-        if point fits maybemodel with an error smaller than t
+        if point fits maybemodel with an error smaller than thresh
              add point to alsoinliers
     }
-    if the number of elements in alsoinliers is > d {
+    if the number of elements in alsoinliers is > min_matches {
         % this implies that we may have found a good model
         % now test how good it is
         bettermodel = model parameters fitted to all points in maybeinliers and
@@ -445,42 +449,31 @@ while iterations < k {
 return bestfit
 }}}
 """
-
-    def random_partition(n, n_data):
-        """return n random rows of data and also the other len(data)-n rows"""
-        all_idxs = _np.arange(n_data)
-        _np.random.shuffle(all_idxs)
-        idxs1 = all_idxs[:n]
-        idxs2 = all_idxs[n:]
-        return idxs1, idxs2
-
     iterations = 0
     bestfit = None
-    # besterr = _np.inf
     best_inlier_idxs = None
-    while iterations < k:
-        maybe_idxs, test_idxs = random_partition(n, data.shape[0])
+    n_data = data.shape[0]
+    n = min_data_points
+    all_idxs = _np.arange(n_data)
+
+    while iterations < max_iter:
+        # Partition indices into two random subsets
+        _np.random.shuffle(all_idxs)
+        maybe_idxs, test_idxs = all_idxs[:n], all_idxs[n:]
         maybeinliers = data[maybe_idxs, :]
         test_points = data[test_idxs, :]
         maybemodel = model.fit(maybeinliers)
         test_err = model.get_error(test_points, maybemodel)
         # select indices of rows with accepted points
-        also_idxs = test_idxs[test_err < t]
+        also_idxs = test_idxs[test_err < thresh]
         alsoinliers = data[also_idxs, :]
-        if len(alsoinliers) > d:
+        if len(alsoinliers) > min_matches:
             betterdata = _np.concatenate((maybeinliers, alsoinliers))
             bestfit = model.fit(betterdata)
-            # better_errs = model.get_error(betterdata, bettermodel)
-            # thiserr = _np.mean(better_errs)
-            # if thiserr < besterr:
-            # bestfit = bettermodel
-            # besterr = thiserr
             best_inlier_idxs = _np.concatenate((maybe_idxs, also_idxs))
             break
         iterations += 1
     if bestfit is None:
-        raise ValueError("did not meet fit acceptance criteria")
-    if return_all:
-        return bestfit, {'inliers': best_inlier_idxs}
-    else:
-        return bestfit
+        raise ValueError("Did not meet fit acceptance criteria")
+
+    return bestfit, best_inlier_idxs
