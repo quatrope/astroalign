@@ -33,16 +33,19 @@ PIXEL_TOL = 2
 MIN_MATCHES_FRACTION = 0.8
 
 
-def _invariantfeat(sources, ind1, ind2, ind3):
-    x1, x2, x3 = sources[[ind1, ind2, ind3]]
+def _invariantfeat(x1, x2, x3):
+    "Given 3 points x1, x2, x3, return the invariant features for the set."
     sides = np.sort([np.linalg.norm(x1 - x2), np.linalg.norm(x2 - x3),
                     np.linalg.norm(x1 - x3)])
     return [sides[2] / sides[1], sides[1] / sides[0]]
 
 
 def _generate_invariants(sources, nearest_neighbors=5):
+    """
+"""
     # Helping function
     def arrangetriplet(sources, vertex_indices):
+        ""
         side1 = np.array([vertex_indices[0], vertex_indices[1]])
         side2 = np.array([vertex_indices[1], vertex_indices[2]])
         side3 = np.array([vertex_indices[0], vertex_indices[2]])
@@ -69,7 +72,7 @@ def _generate_invariants(sources, nearest_neighbors=5):
     for asrc in sources:
         __, indx = coordtree.query(asrc, 5)
         all_asterism_triang = [list(cmb) for cmb in combinations(indx, 3)]
-        inv.extend([_invariantfeat(sources, *triplet)
+        inv.extend([_invariantfeat(*sources[triplet])
                     for triplet in all_asterism_triang])
         triang_vrtx.extend(all_asterism_triang)
 
@@ -316,7 +319,7 @@ def _find_sources(image):
     srcs_labels, num_srcs = ndimage.label(img1)
 
     if num_srcs < 10:
-        print("WARNING: Only %d sources found." % (num_srcs))
+        print("WARNING: Only %d sogurces found." % (num_srcs))
 
     # Eliminate here all 1 pixel sources
     all_objects = [[ind + 1, aslice] for ind, aslice
