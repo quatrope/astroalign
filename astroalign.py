@@ -30,113 +30,113 @@ __version__ = '1.0.0.dev0'
 
 MAX_CONTROL_POINTS = 50
 PIXEL_TOL = 2
+MIN_MATCHES_FRACTION = 0.8
 
 
-class InvariantTriangleMapping():
-
-    def invariantfeat(self, sources, ind1, ind2, ind3):
-        x1, x2, x3 = sources[[ind1, ind2, ind3]]
-        sides = np.sort([np.linalg.norm(x1 - x2), np.linalg.norm(x2 - x3),
-                        np.linalg.norm(x1 - x3)])
-        return [sides[2] / sides[1], sides[1] / sides[0]]
-
-    def generate_invariants(self, sources, nearest_neighbors=5):
-        # Helping function
-        def arrangetriplet(sources, vertex_indices):
-            side1 = np.array([vertex_indices[0], vertex_indices[1]])
-            side2 = np.array([vertex_indices[1], vertex_indices[2]])
-            side3 = np.array([vertex_indices[0], vertex_indices[2]])
-
-            sidelengths = [np.linalg.norm(sources[p1_ind] - sources[p2_ind])
-                           for p1_ind, p2_ind in [side1, side2, side3]]
-            lengths_arg = np.argsort(sidelengths)
-
-            # Sides sorted from shortest to longest
-            sides = np.array([side1, side2, side3])[lengths_arg]
-
-            # now I order the points inside the side this way:
-            # [(x2,x0),(x0,x1),(x1,x2)]
-            for i in range(-1, 2):
-                if sides[i][0] in sides[i + 1]:
-                    # swap the points
-                    sides[i] = sides[i][[1, 0]]
-
-            return sides[:, 1]
-
-        inv = []
-        triang_vrtx = []
-        coordtree = KDTree(sources)
-        for asrc in sources:
-            __, indx = coordtree.query(asrc, 5)
-            all_asterism_triang = [list(cmb) for cmb in combinations(indx, 3)]
-            inv.extend([self.invariantfeat(sources, *triplet)
-                        for triplet in all_asterism_triang])
-            triang_vrtx.extend(all_asterism_triang)
-
-        # Remove here many duplicate triangles for close-tight neighbors
-        inv_uniq = np.array([elem for (pos, elem) in enumerate(inv)
-                            if elem not in inv[pos + 1:]])
-        triang_vrtx_uniq = [triang_vrtx[pos] for (pos, elem) in enumerate(inv)
-                            if elem not in inv[pos + 1:]]
-
-        # This will order the vertices in the triangle in a determined way to
-        # make a point to point correspondance with other triangles
-        # (basically going around the triangle from smallest to largest side)
-        triang_vrtx_uniq = np.array([arrangetriplet(sources, triplet)
-                                     for triplet in triang_vrtx_uniq])
-
-        return inv_uniq, triang_vrtx_uniq
-
-    class MatchTransform:
-        def __init__(self, ref_srcs, target_srcs):
-            self.ref = ref_srcs
-            self.target = target_srcs
-
-        def fit(self, data):
-            # numpy arrays require an explicit 'in' method
-            def in_np_array(elem, arr):
-                return np.any([np.all(elem == el) for el in arr])
-
-            # Collect all matches, forget triangle info
-            d1, d2, d3 = data.shape
-            point_matches = data.reshape(d1 * d2, d3)
-            m = []
-            b = []
-            for match_ind, amatch in enumerate(point_matches):
-                # add here the matches that don't repeat
-                if not in_np_array(amatch, point_matches[match_ind + 1:]):
-                    ind_r, ind_t = amatch
-                    x_r, y_r = self.ref[ind_r]
-                    x_t, y_t = self.target[ind_t]
-                    m.extend([[x_r, y_r, 1, 0], [y_r, -x_r, 0, 1]])
-                    b.extend([x_t, y_t])
-            m = np.array(m)
-            b = np.array(b)
-            sol, resid, rank, sv = np.linalg.lstsq(m, b.T)
-            # lc,s is l (scaling) times cos,sin(alpha); alpha is the rot angle
-            # ltx,y is l (scaling) times the translation in the x,y direction
-            lc = sol.item(0)
-            ls = sol.item(1)
-            ltx = sol.item(2)
-            lty = sol.item(3)
-            approxm = np.array([[lc, ls, ltx], [-ls, lc, lty]])
-            return approxm
-
-        def get_error(self, data, approxm):
-            error = []
-            for amatch in data:
-                max_err = 0.
-                for ind_r, ind_t in amatch:
-                    x = self.ref[ind_r]
-                    y = self.target[ind_t]
-                    y_fit = approxm.dot(np.append(x, 1))
-                    max_err = max(max_err, np.linalg.norm(y - y_fit))
-                error.append(max_err)
-            return np.array(error)
+def _invariantfeat(sources, ind1, ind2, ind3):
+    x1, x2, x3 = sources[[ind1, ind2, ind3]]
+    sides = np.sort([np.linalg.norm(x1 - x2), np.linalg.norm(x2 - x3),
+                    np.linalg.norm(x1 - x3)])
+    return [sides[2] / sides[1], sides[1] / sides[0]]
 
 
-def get_transform(source, target, max_pix_tol=2.,
-                  min_matches_fraction=0.8, invariant_map=None):
+def _generate_invariants(sources, nearest_neighbors=5):
+    # Helping function
+    def arrangetriplet(sources, vertex_indices):
+        side1 = np.array([vertex_indices[0], vertex_indices[1]])
+        side2 = np.array([vertex_indices[1], vertex_indices[2]])
+        side3 = np.array([vertex_indices[0], vertex_indices[2]])
+
+        sidelengths = [np.linalg.norm(sources[p1_ind] - sources[p2_ind])
+                       for p1_ind, p2_ind in [side1, side2, side3]]
+        lengths_arg = np.argsort(sidelengths)
+
+        # Sides sorted from shortest to longest
+        sides = np.array([side1, side2, side3])[lengths_arg]
+
+        # now I order the points inside the side this way:
+        # [(x2,x0),(x0,x1),(x1,x2)]
+        for i in range(-1, 2):
+            if sides[i][0] in sides[i + 1]:
+                # swap the points
+                sides[i] = sides[i][[1, 0]]
+
+        return sides[:, 1]
+
+    inv = []
+    triang_vrtx = []
+    coordtree = KDTree(sources)
+    for asrc in sources:
+        __, indx = coordtree.query(asrc, 5)
+        all_asterism_triang = [list(cmb) for cmb in combinations(indx, 3)]
+        inv.extend([_invariantfeat(sources, *triplet)
+                    for triplet in all_asterism_triang])
+        triang_vrtx.extend(all_asterism_triang)
+
+    # Remove here many duplicate triangles for close-tight neighbors
+    inv_uniq = np.array([elem for (pos, elem) in enumerate(inv)
+                        if elem not in inv[pos + 1:]])
+    triang_vrtx_uniq = [triang_vrtx[pos] for (pos, elem) in enumerate(inv)
+                        if elem not in inv[pos + 1:]]
+
+    # This will order the vertices in the triangle in a determined way to
+    # make a point to point correspondance with other triangles
+    # (basically going around the triangle from smallest to largest side)
+    triang_vrtx_uniq = np.array([arrangetriplet(sources, triplet)
+                                 for triplet in triang_vrtx_uniq])
+
+    return inv_uniq, triang_vrtx_uniq
+
+
+class MatchTransform:
+    def __init__(self, ref_srcs, target_srcs):
+        self.ref = ref_srcs
+        self.target = target_srcs
+
+    def fit(self, data):
+        # numpy arrays require an explicit 'in' method
+        def in_np_array(elem, arr):
+            return np.any([np.all(elem == el) for el in arr])
+
+        # Collect all matches, forget triangle info
+        d1, d2, d3 = data.shape
+        point_matches = data.reshape(d1 * d2, d3)
+        m = []
+        b = []
+        for match_ind, amatch in enumerate(point_matches):
+            # add here the matches that don't repeat
+            if not in_np_array(amatch, point_matches[match_ind + 1:]):
+                ind_r, ind_t = amatch
+                x_r, y_r = self.ref[ind_r]
+                x_t, y_t = self.target[ind_t]
+                m.extend([[x_r, y_r, 1, 0], [y_r, -x_r, 0, 1]])
+                b.extend([x_t, y_t])
+        m = np.array(m)
+        b = np.array(b)
+        sol, resid, rank, sv = np.linalg.lstsq(m, b.T)
+        # lc,s is l (scaling) times cos,sin(alpha); alpha is the rot angle
+        # ltx,y is l (scaling) times the translation in the x,y direction
+        lc = sol.item(0)
+        ls = sol.item(1)
+        ltx = sol.item(2)
+        lty = sol.item(3)
+        approxm = np.array([[lc, ls, ltx], [-ls, lc, lty]])
+        return approxm
+
+    def get_error(self, data, approxm):
+        error = []
+        for amatch in data:
+            max_err = 0.
+            for ind_r, ind_t in amatch:
+                x = self.ref[ind_r]
+                y = self.target[ind_t]
+                y_fit = approxm.dot(np.append(x, 1))
+                max_err = max(max_err, np.linalg.norm(y - y_fit))
+            error.append(max_err)
+        return np.array(error)
+
+
+def get_transform(source, target):
     """Return the 2 by 3 affine transformation M that maps pixel x, y indices
 from the source image s = (x, y) into the target (destination) image t = (x, y)
 t = M * s.
@@ -160,16 +160,24 @@ target:
         source_finder = _find_sources_with_sep
 
     try:
-        if len(source[0]) == 2 and len(target[0]) == 2:
+        if len(source[0]) == 2:
             # Assume it's a list of (x, y) pairs
             source_controlp = np.array(source)[:MAX_CONTROL_POINTS]
-            target_controlp = np.array(target)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
             source_controlp = source_finder(source)[:MAX_CONTROL_POINTS]
-            target_controlp = source_finder(target)[:MAX_CONTROL_POINTS]
     except:
         raise TypeError('Input type for source not supported.')
+
+    try:
+        if len(target[0]) == 2:
+            # Assume it's a list of (x, y) pairs
+            target_controlp = np.array(target)[:MAX_CONTROL_POINTS]
+        else:
+            # Assume it's a 2D image
+            target_controlp = source_finder(target)[:MAX_CONTROL_POINTS]
+    except:
+        raise TypeError('Input type for target not supported.')
 
     # Check for low number of reference points
     if len(source_controlp) < 3:
@@ -179,14 +187,12 @@ target:
         raise Exception("Reference stars in target image are less than the "
                         "minimum value of points (3).")
 
-    inv_map = InvariantTriangleMapping()
-
     source_invariants, source_asterisms = \
-        inv_map.generate_invariants(source_controlp, nearest_neighbors=5)
+        _generate_invariants(source_controlp, nearest_neighbors=5)
     source_invariant_tree = KDTree(source_invariants)
 
     target_invariants, target_asterisms = \
-        inv_map.generate_invariants(target_controlp, nearest_neighbors=5)
+        _generate_invariants(target_controlp, nearest_neighbors=5)
     target_invariant_tree = KDTree(target_invariants)
 
     # r = 0.03 is the maximum search distance, 0.03 is an empirical value that
@@ -201,12 +207,11 @@ target:
             matches.append(zip(t2, t1))
     matches = np.array(matches)
 
-    inv_model = inv_map.MatchTransform(target_controlp, source_controlp)
+    inv_model = MatchTransform(target_controlp, source_controlp)
     n_invariants = len(matches)
     max_iter = n_invariants
-    min_matches = min(10, int(n_invariants * min_matches_fraction))
-    best_m = _ransac(matches, inv_model, 1, max_iter, max_pix_tol,
-                     min_matches)
+    min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
+    best_m = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL, min_matches)
 
     return best_m
 
@@ -237,8 +242,7 @@ def align_image(source, target):
     ref_srcs = source_finder(target)[:MAX_CONTROL_POINTS]
     img_sources = source_finder(source)[:MAX_CONTROL_POINTS]
 
-    m = get_transform(source=ref_srcs, target=img_sources,
-                      max_pix_tol=PIXEL_TOL)
+    m = get_transform(source=ref_srcs, target=img_sources)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation
