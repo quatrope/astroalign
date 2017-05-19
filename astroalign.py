@@ -213,7 +213,7 @@ target:
     best_m, inliers = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
                               min_matches)
 
-    return best_m
+    return best_m, inliers
 
 
 def align_image(source, target):
@@ -242,7 +242,7 @@ def align_image(source, target):
     ref_srcs = source_finder(target)[:MAX_CONTROL_POINTS]
     img_sources = source_finder(source)[:MAX_CONTROL_POINTS]
 
-    m = get_transform(source=ref_srcs, target=img_sources)
+    m, __ = get_transform(source=ref_srcs, target=img_sources)
 
     # SciPy Affine transformation transform a (row,col) pixel according to pT+s
     # where p is in the _output_ image, T is the rotation and s the translation
