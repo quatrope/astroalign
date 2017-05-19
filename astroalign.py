@@ -116,10 +116,10 @@ class _MatchTransform:
         s, d = data.reshape(d1 * d2, d3).T
         approx_t = estimate_transform('similarity',
                                       self.ref[s], self.target[d])
-        approxm = approx_t.params[:2, :]
-        return approxm
+        return approx_t.params
 
-    def get_error(self, data, approxm):
+    def get_error(self, data, approx3x3):
+        approxm = approx3x3[:2, :]
         error = []
         for atrianglematch in data:
             max_err = 0.
@@ -230,7 +230,7 @@ def align_image(source, target):
 
     Return aligned_image"""
 
-    from scipy.ndimage.interpolation import affine_transform
+    from skimage.transform import warp, SimilarityTransform
 
     try:
         import sep  # noqa
@@ -243,43 +243,20 @@ def align_image(source, target):
     img_sources = source_finder(source)[:MAX_CONTROL_POINTS]
 
     m, __ = get_transform(source=ref_srcs, target=img_sources)
+    t = SimilarityTransform(matrix=m)
 
-    # SciPy Affine transformation transform a (row,col) pixel according to pT+s
-    # where p is in the _output_ image, T is the rotation and s the translation
-    # offset, so some mathematics is required to put it into a suitable form
-    # In particular, affine_transform() requires the inverse transformation
-    # that registration returns but for (row, col) instead of (x,y)
-    def inverse_transform(m):
-        m_rot_inv = _np.linalg.inv(m[:2, :2])
-        m_offset_inv = -m_rot_inv.dot(m[:2, 2])
-        m_inv = _np.zeros(m.shape)
-        m_inv[:2, :2] = m_rot_inv
-        m_inv[:2, 2] = m_offset_inv
-        if m.shape == (3, 3):
-            m_inv[2, 2] = 1
-        return m_inv
+    aligned_image = warp(source, inverse_map=t.inverse,
+                         output_shape=target.shape, order=3, mode='constant',
+                         cval=_np.median(source), clip=False,
+                         preserve_range=False)
 
-    m_inv = inverse_transform(m)
-    # p will transform from (x,y) to (row, col)=(y,x)
-    p = _np.array([[0, 1], [1, 0]])
-    mrcinv_rot = p.dot(m_inv[:2, :2]).dot(p)
-    mrcinv_offset = p.dot(m_inv[:2, 2])
-
-    aligned_image = affine_transform(source, mrcinv_rot,
-                                     offset=mrcinv_offset,
-                                     output_shape=target.shape,
-                                     cval=_np.median(source)
-                                     )
     if isinstance(source, _np.ma.MaskedArray):
         # it could be that source's mask is just set to False
-        if type(source.mask) is _np.ndarray:
-            aligned_image_mask = \
-                affine_transform(source.mask.astype('float32'),
-                                 mrcinv_rot,
-                                 offset=mrcinv_offset,
-                                 output_shape=target.shape,
-                                 cval=1.0
-                                 )
+        if isinstance(source.mask, _np.ndarray):
+            aligned_image_mask = warp(source.mask.astype('float32'),
+                                      inverse_map=t.inverse,
+                                      output_shape=target.shape,
+                                      cval=1.0)
             aligned_image_mask = aligned_image_mask > 0.4
             aligned_image = _np.ma.array(aligned_image,
                                          mask=aligned_image_mask)

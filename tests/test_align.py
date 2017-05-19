@@ -116,7 +116,8 @@ class TestAlign(unittest.TestCase):
         yoff_corrected = (-np.sin(alpha) * self.w / 2 + (1 - np.cos(alpha)) *
                           self.h / 2 + self.y_offset)
         mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected],
-                          [np.sin(alpha), np.cos(alpha), yoff_corrected]])
+                          [np.sin(alpha), np.cos(alpha), yoff_corrected],
+                          [0.0, 0.0, 1.0]])
         # Pass the test if less than 2% relative error in result
         rel_error = np.linalg.norm(m - mtrue, 1) / np.linalg.norm(mtrue, 1)
         self.assertLess(rel_error, 2E-2)
