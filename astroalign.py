@@ -121,9 +121,9 @@ class _MatchTransform:
 
     def get_error(self, data, approxm):
         error = []
-        for amatch in data:
+        for atrianglematch in data:
             max_err = 0.
-            for ind_r, ind_t in amatch:
+            for ind_r, ind_t in atrianglematch:
                 x = self.ref[ind_r]
                 y = self.target[ind_t]
                 y_fit = approxm.dot(_np.append(x, 1))
