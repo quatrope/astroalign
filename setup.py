@@ -11,6 +11,7 @@ setup(name='astroalign',
                         "scipy>=0.15",
                         "astropy>=1.0",
                         "scikit-image",
+                        "sep",
                         ],
       test_suite='tests',
       )

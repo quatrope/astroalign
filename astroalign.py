@@ -151,19 +151,12 @@ target:
     from scipy.spatial import KDTree
 
     try:
-        import sep  # noqa
-    except ImportError:
-        source_finder = _find_sources
-    else:
-        source_finder = _find_sources_with_sep
-
-    try:
         if len(source[0]) == 2:
             # Assume it's a list of (x, y) pairs
             source_controlp = _np.array(source)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
-            source_controlp = source_finder(source)[:MAX_CONTROL_POINTS]
+            source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
     except:
         raise TypeError('Input type for source not supported.')
 
@@ -173,7 +166,7 @@ target:
             target_controlp = _np.array(target)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
-            target_controlp = source_finder(target)[:MAX_CONTROL_POINTS]
+            target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
     except:
         raise TypeError('Input type for target not supported.')
 
@@ -229,18 +222,10 @@ def align_image(source, target):
     Masks will be transformed the same way as source.
 
     Return aligned_image"""
-
     from skimage.transform import warp, SimilarityTransform
 
-    try:
-        import sep  # noqa
-    except ImportError:
-        source_finder = _find_sources
-    else:
-        source_finder = _find_sources_with_sep
-
-    ref_srcs = source_finder(target)[:MAX_CONTROL_POINTS]
-    img_sources = source_finder(source)[:MAX_CONTROL_POINTS]
+    ref_srcs = _find_sources(target)[:MAX_CONTROL_POINTS]
+    img_sources = _find_sources(source)[:MAX_CONTROL_POINTS]
 
     m, __ = get_transform(source=ref_srcs, target=img_sources)
     t = SimilarityTransform(matrix=m)
@@ -267,68 +252,17 @@ def align_image(source, target):
     return aligned_image
 
 
-def _find_sources(image):
-    """Return sources (x, y) sorted by brightness.
-    """
-    from scipy import ndimage
-    from astropy.stats import mad_std
+def _find_sources(img):
+    "Return sources (x, y) sorted by brightness."
 
-    img1 = image.copy().astype('float32')
-    m, s = _np.median(image), mad_std(image)
-    src_mask = image > m + 3.0 * s
-    # set the background to the min value of the sources
-    img1[~src_mask] = img1[src_mask].min()
-    # this rescales (min,max) to (0,1)
-    img1 = (img1.min() - img1) / (img1.min() - img1.max())
-    img1[~src_mask] = 0.
-
-    def obj_params_with_offset(img, labels, aslice, label_idx):
-        y_offset = aslice[0].start
-        x_offset = aslice[1].start
-        thumb = img[aslice]
-        lb = labels[aslice]
-        yc, xc = ndimage.center_of_mass(thumb, labels=lb, index=label_idx)
-        br = thumb[lb == label_idx].sum()  # the intensity of the source
-        return [br, xc + x_offset, yc + y_offset]
-
-    srcs_labels, num_srcs = ndimage.label(img1)
-
-    # Eliminate here all 1 pixel sources
-    all_objects = [[ind + 1, aslice] for ind, aslice
-                   in enumerate(ndimage.find_objects(srcs_labels))
-                   if srcs_labels[aslice].shape != (1, 1)]
-    lum = _np.array([obj_params_with_offset(img1, srcs_labels, aslice, lab_idx)
-                    for lab_idx, aslice in all_objects])
-
-    lum = lum[lum[:, 0].argsort()[::-1]]  # sort by brightness descending order
-
-    return lum[:, 1:]
-
-
-def _find_sources_with_sep(img):
-    """Return sources (x, y) sorted by brightness. Use SEP package.
-    """
     import sep
     if isinstance(img, _np.ma.MaskedArray):
         image = img.filled(fill_value=_np.median(img)).astype('float32')
     else:
         image = img.astype('float32')
-
     bkg = sep.Background(image)
     thresh = 3. * bkg.globalrms
-    try:
-        sources = sep.extract(image - bkg.back(), thresh)
-    except Exception as e:
-        buff_message = 'internal pixel buffer full'
-        if e.message[0:26] == buff_message:
-            sep.set_extract_pixstack(600000)
-        try:
-            sources = sep.extract(image - bkg.back(), thresh)
-        except Exception as e:
-            if e.message[0:26] == buff_message:
-                sep.set_extract_pixstack(900000)
-                sources = sep.extract(image - bkg.back(), thresh)
-
+    sources = sep.extract(image - bkg.back(), thresh)
     sources.sort(order='flux')
     return _np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
 
