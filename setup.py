@@ -10,6 +10,7 @@ setup(name='astroalign',
       install_requires=["numpy>=1.6.2",
                         "scipy>=0.15",
                         "astropy>=1.0",
+                        "scikit-image"
                         ],
       test_suite='tests',
       )

@@ -65,7 +65,9 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
 
 
 def _generate_invariants(sources):
-    """
+    """Return an array of (unique) invariants derived from the array `sources`.
+Return an array of the indices of `sources` that correspond to each invariant,
+arranged as described in _arrangetriplet.
 """
     from scipy.spatial import KDTree
     from itertools import combinations
@@ -102,33 +104,19 @@ class _MatchTransform:
         self.target = target_srcs
 
     def fit(self, data):
-        # numpy arrays require an explicit 'in' method
-        def in_np_array(elem, arr):
-            return _np.any([_np.all(elem == el) for el in arr])
+        """
+    Return the best 2D similarity transform from the points given in data.
 
-        # Collect all matches, forget triangle info
+    data: N sets of 3 indices for a triangle in ref
+        and the 3 indices of the corresponding triangle in target;
+        arranged in a (N, 3, 2) array.
+        """
+        from skimage.transform import estimate_transform
         d1, d2, d3 = data.shape
-        point_matches = data.reshape(d1 * d2, d3)
-        m = []
-        b = []
-        for match_ind, amatch in enumerate(point_matches):
-            # add here the matches that don't repeat
-            if not in_np_array(amatch, point_matches[match_ind + 1:]):
-                ind_r, ind_t = amatch
-                x_r, y_r = self.ref[ind_r]
-                x_t, y_t = self.target[ind_t]
-                m.extend([[x_r, y_r, 1, 0], [y_r, -x_r, 0, 1]])
-                b.extend([x_t, y_t])
-        m = _np.array(m)
-        b = _np.array(b)
-        sol, resid, rank, sv = _np.linalg.lstsq(m, b.T)
-        # lc,s is l (scaling) times cos,sin(alpha); alpha is the rot angle
-        # ltx,y is l (scaling) times the translation in the x,y direction
-        lc = sol.item(0)
-        ls = sol.item(1)
-        ltx = sol.item(2)
-        lty = sol.item(3)
-        approxm = _np.array([[lc, ls, ltx], [-ls, lc, lty]])
+        s, d = data.reshape(d1 * d2, d3).T
+        approx_t = estimate_transform('similarity',
+                                      self.ref[s], self.target[d])
+        approxm = approx_t.params[:2, :]
         return approxm
 
     def get_error(self, data, approxm):
@@ -141,7 +129,8 @@ class _MatchTransform:
                 y_fit = approxm.dot(_np.append(x, 1))
                 max_err = max(max_err, _np.linalg.norm(y - y_fit))
             error.append(max_err)
-        return _np.array(error)
+        error = _np.array(error)
+        return error
 
 
 def get_transform(source, target):
@@ -327,9 +316,6 @@ def _find_sources(image):
 
     srcs_labels, num_srcs = ndimage.label(img1)
 
-    if num_srcs < 10:
-        print("WARNING: Only %d sogurces found." % (num_srcs))
-
     # Eliminate here all 1 pixel sources
     all_objects = [[ind + 1, aslice] for ind, aslice
                    in enumerate(ndimage.find_objects(srcs_labels))
@@ -411,7 +397,7 @@ http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
 
 {{{
 Given:
-    data: a set of observed data points
+    data: a set of data points
     model: a model that can be fitted to data points
     min_data_points: the minimum number of data values required to fit the
         model
