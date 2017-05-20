@@ -116,30 +116,24 @@ class _MatchTransform:
         s, d = data.reshape(d1 * d2, d3).T
         approx_t = estimate_transform('similarity',
                                       self.ref[s], self.target[d])
-        return approx_t.params
+        return approx_t
 
-    def get_error(self, data, approx3x3):
-        approxm = approx3x3[:2, :]
-        error = []
-        for atrianglematch in data:
-            max_err = 0.
-            for ind_r, ind_t in atrianglematch:
-                x = self.ref[ind_r]
-                y = self.target[ind_t]
-                y_fit = approxm.dot(_np.append(x, 1))
-                max_err = max(max_err, _np.linalg.norm(y - y_fit))
-            error.append(max_err)
-        error = _np.array(error)
+    def get_error(self, data, approx_t):
+        d1, d2, d3 = data.shape
+        s, d = data.reshape(d1 * d2, d3).T
+        resid = approx_t.residuals(self.ref[s], self.target[d]).reshape(d1, d2)
+        error = resid.max(axis=1)
         return error
 
 
 def get_transform(source, target):
-    """Return the 2 by 3 affine transformation M that maps pixel x, y indices
+    """Return a SimilarityTransform object T that maps pixel x, y indices
 from the source image s = (x, y) into the target (destination) image t = (x, y)
-t = M * s.
-Return parameters (rotation_angle, translation_x, translation_y, scale_factor)
-from the transformation.
-Return an iterable of matched sources.
+t = T * s.
+T contains parameters of the tranformation T.rotation, T.translation, T.scale
+
+sReturn an iterable of matched sources:
+    (source_control_points, target_control_points)
 
 source:
   Either a numpy array of the source image to be transformed
@@ -203,10 +197,13 @@ target:
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
-    best_m, inliers = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
-                              min_matches)
+    best_t, inlier_ind = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
+                                 min_matches)
+    inliers = matches[inlier_ind]
+    d1, d2, d3 = inliers.shape
+    s, d = inliers.reshape(d1 * d2, d3).T
 
-    return best_m, inliers
+    return best_t, (source_controlp[s], target_controlp[d])
 
 
 def align_image(source, target):
@@ -222,13 +219,12 @@ def align_image(source, target):
     Masks will be transformed the same way as source.
 
     Return aligned_image"""
-    from skimage.transform import warp, SimilarityTransform
+    from skimage.transform import warp
 
     ref_srcs = _find_sources(target)[:MAX_CONTROL_POINTS]
     img_sources = _find_sources(source)[:MAX_CONTROL_POINTS]
 
-    m, __ = get_transform(source=ref_srcs, target=img_sources)
-    t = SimilarityTransform(matrix=m)
+    t, __ = get_transform(source=ref_srcs, target=img_sources)
 
     aligned_image = warp(source, inverse_map=t.inverse,
                          output_shape=target.shape, order=3, mode='constant',
