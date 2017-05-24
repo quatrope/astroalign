@@ -99,29 +99,31 @@ arranged as described in _arrangetriplet.
 
 
 class _MatchTransform:
-    def __init__(self, ref_srcs, target_srcs):
-        self.ref = ref_srcs
-        self.target = target_srcs
+    def __init__(self, source, target):
+        self.source = source
+        self.target = target
 
     def fit(self, data):
         """
     Return the best 2D similarity transform from the points given in data.
 
-    data: N sets of 3 indices for a triangle in ref
-        and the 3 indices of the corresponding triangle in target;
+    data: N sets of similar corresponding triangles.
+        3 indices for a triangle in ref
+        and the 3 indices for the corresponding triangle in target;
         arranged in a (N, 3, 2) array.
         """
         from skimage.transform import estimate_transform
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
         approx_t = estimate_transform('similarity',
-                                      self.ref[s], self.target[d])
+                                      self.source[s], self.target[d])
         return approx_t
 
     def get_error(self, data, approx_t):
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
-        resid = approx_t.residuals(self.ref[s], self.target[d]).reshape(d1, d2)
+        resid = approx_t.residuals(self.source[s], self.target[d])\
+            .reshape(d1, d2)
         error = resid.max(axis=1)
         return error
 
@@ -167,10 +169,10 @@ target:
     # Check for low number of reference points
     if len(source_controlp) < 3:
         raise Exception("Reference stars in source image are less than the "
-                        "minimum value of points (3).")
+                        "minimum value (3).")
     if len(target_controlp) < 3:
         raise Exception("Reference stars in target image are less than the "
-                        "minimum value of points (3).")
+                        "minimum value (3).")
 
     source_invariants, source_asterisms = _generate_invariants(source_controlp)
     source_invariant_tree = KDTree(source_invariants)
@@ -186,14 +188,19 @@ target:
     matches_list = \
         source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.03)
 
+    # matches unravels the previous list of matches into pairs of source and
+    # target control point matches.
+    # matches is a (N, 3, 2) array. N sets of similar corresponding triangles.
+    # 3 indices for a triangle in ref
+    # and the 3 indices for the corresponding triangle in target;
     matches = []
     # t1 is an asterism in source, t2 in target
     for t1, t2_list in zip(source_asterisms, matches_list):
         for t2 in target_asterisms[t2_list]:
-            matches.append(zip(t2, t1))
+            matches.append(zip(t1, t2))
     matches = _np.array(matches)
 
-    inv_model = _MatchTransform(target_controlp, source_controlp)
+    inv_model = _MatchTransform(source_controlp, target_controlp)
     n_invariants = len(matches)
     max_iter = n_invariants
     min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
@@ -221,10 +228,10 @@ def align_image(source, target):
     Return aligned_image"""
     from skimage.transform import warp
 
-    ref_srcs = _find_sources(target)[:MAX_CONTROL_POINTS]
-    img_sources = _find_sources(source)[:MAX_CONTROL_POINTS]
+    source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
+    target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
 
-    t, __ = get_transform(source=ref_srcs, target=img_sources)
+    t, __ = get_transform(source=source_controlp, target=target_controlp)
 
     aligned_image = warp(source, inverse_map=t.inverse,
                          output_shape=target.shape, order=3, mode='constant',
@@ -315,31 +322,6 @@ Given:
 Return:
     bestfit: model parameters which best fit the data (or nil if no good model
               is found)
-iterations = 0
-bestfit = nil
-besterr = something really large
-while iterations < max_iter {
-    maybeinliers = n randomly selected values from data
-    maybemodel = model parameters fitted to maybeinliers
-    alsoinliers = empty set
-    for every point in data not in maybeinliers {
-        if point fits maybemodel with an error smaller than thresh
-             add point to alsoinliers
-    }
-    if the number of elements in alsoinliers is > min_matches {
-        % this implies that we may have found a good model
-        % now test how good it is
-        bettermodel = model parameters fitted to all points in maybeinliers and
-        alsoinliers
-        thiserr = a measure of how well model fits these points
-        if thiserr < besterr {
-            bestfit = bettermodel
-            besterr = thiserr
-        }
-    }
-    increment iterations
-}
-return bestfit
 }}}
 """
     iterations = 0

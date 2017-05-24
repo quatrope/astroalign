@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
-import astroalign
-# import scipy
+import astroalign as aa
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -104,35 +103,40 @@ class TestAlign(unittest.TestCase):
         self.star_ref_pos = np.array(zip(self.ref_cols, self.ref_rows))
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
 
-    def test_get_transform(self):
-        star_ref_pos_b = self.star_ref_pos[np.argsort(self.ref_flux)]
-        star_new_pos_b = self.star_new_pos[np.argsort(self.new_flux)]
+    def test_get_transform_givensources(self):
+        from skimage.transform import estimate_transform
+        source = np.array([[1.4, 2.2], [5.3, 1.0], [3.7, 1.5],
+                           [10.1, 9.6], [1.3, 10.2], [7.1, 2.0]])
+        nsrc = source.shape[0]
+        scale = 1.5
+        alpha = np.pi / 8.
+        mm = scale * np.array([[np.cos(alpha), -np.sin(alpha)],
+                               [np.sin(alpha), np.cos(alpha)]])
+        tx = 2.0
+        ty = 1.0
+        transl = np.array([nsrc * [tx], nsrc * [ty]])
+        dest = (mm.dot(source.T) + transl).T
+        t_true = estimate_transform('similarity', source, dest)
 
-        t, __ = astroalign.get_transform(star_new_pos_b[50::-1],
-                                         star_ref_pos_b[50::-1])
-        m = t.params
-        alpha = self.rot_angle
-        xoff_corrected = ((1 - np.cos(alpha)) * self.w / 2 + np.sin(alpha) *
-                          self.h / 2 + self.x_offset)
-        yoff_corrected = (-np.sin(alpha) * self.w / 2 + (1 - np.cos(alpha)) *
-                          self.h / 2 + self.y_offset)
-        mtrue = np.array([[np.cos(alpha), -np.sin(alpha), xoff_corrected],
-                          [np.sin(alpha), np.cos(alpha), yoff_corrected],
-                          [0.0, 0.0, 1.0]])
-        # Pass the test if less than 2% relative error in result
-        rel_error = np.linalg.norm(m - mtrue, 1) / np.linalg.norm(mtrue, 1)
-        self.assertLess(rel_error, 2E-2)
+        # disorder dest points so they don't match the oder of source
+        np.random.shuffle(dest)
+
+        t, __ = aa.get_transform(source, dest)
+        self.assertLess(t_true.scale - t.scale, 1E-10)
+        self.assertLess(t_true.rotation - t.rotation, 1E-10)
+        self.assertLess(np.linalg.norm(t_true.translation - t.translation),
+                        1E-10)
 
     def test_align_image(self):
         def compare_image(the_image):
-            """Return the fraction of sources found in the original image"""
+            """Return the fraction of sources found in the reference image"""
             # pixel comparison is not good, doesn't work. Compare catalogs.
             if isinstance(the_image, np.ma.MaskedArray):
                 full_algn = the_image.filled(fill_value=np.median(the_image))\
                     .astype('float32')
             else:
                 full_algn = the_image.astype('float32')
-            full_algn[the_image == 0] = np.median(the_image)
+            # full_algn[the_image == 0] = np.median(the_image)
             import sep
             bkg = sep.Background(full_algn)
             thresh = 3.0 * bkg.globalrms
@@ -140,7 +144,7 @@ class TestAlign(unittest.TestCase):
             allxy = np.array([[obj['x'], obj['y']] for obj in allobjs])
 
             from scipy.spatial import KDTree
-            ref_coordtree = KDTree(self.star_new_pos)
+            ref_coordtree = KDTree(self.star_ref_pos)
 
             # Compare here srcs list with self.star_ref_pos
             num_sources = 0
@@ -151,8 +155,9 @@ class TestAlign(unittest.TestCase):
             fraction_found = float(num_sources) / float(len(allxy))
             return fraction_found
 
-        image_aligned = astroalign.align_image(source=self.image_ref,
-                                               target=self.image)
+        image_aligned = aa.align_image(source=self.image,
+                                       target=self.image_ref)
+
         # Test that image returned is not masked
         self.assertIs(type(image_aligned), np.ndarray)
         fraction = compare_image(image_aligned)
@@ -167,10 +172,9 @@ class TestAlign(unittest.TestCase):
         image_masked = np.ma.array(self.image, mask=mask)
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
-        def testalignment(image_input, ref_input):
-            image_aligned = astroalign.align_image(source=ref_input,
-                                                   target=image_input)
-            self.assertIs(type(image_aligned), type(ref_input))
+        def testalignment(source, target):
+            image_aligned = aa.align_image(source=source, target=target)
+            self.assertIs(type(image_aligned), type(source))
             fraction = compare_image(image_aligned)
             self.assertGreater(fraction, 0.85)
 
@@ -193,7 +197,7 @@ class TestAlign(unittest.TestCase):
         testalignment(np.ma.array(self.image), np.ma.array(self.image_ref))
 
     def test_find_sources(self):
-        srcs = astroalign._find_sources(self.image_ref)
+        srcs = aa._find_sources(self.image_ref)
 
         from scipy.spatial import KDTree
         ref_coordtree = KDTree(self.star_ref_pos)
