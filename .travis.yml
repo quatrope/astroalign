@@ -3,18 +3,17 @@ language: python
 python:
   - "2.7"
 
+virtualenv:
+  - system_site_packages: true
+
 before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  - conda update --yes conda
-  - pip install --upgrade pip
+  - sudo apt-get install build-essential cython
+  - pip install --upgrade pip setuptools wheel
   - pip install codecov
 
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
-  - pip install astropy sep
+  - pip install --only-binary=numpy,scipy,scikit-learn numpy scipy scikit-learn
+  - pip install sep
 
 script:
   - python setup.py test

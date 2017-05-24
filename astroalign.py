@@ -22,7 +22,10 @@ functions, seeing and atmospheric conditions.
 
 import numpy as _np
 
-__version__ = '1.0.0.dev0'
+__version__ = '1.0.0.dev1'
+
+from skimage.transform import estimate_transform
+from skimage.transform import matrix_transform # noqa
 
 
 MAX_CONTROL_POINTS = 50
@@ -112,7 +115,6 @@ class _MatchTransform:
         and the 3 indices for the corresponding triangle in target;
         arranged in a (N, 3, 2) array.
         """
-        from skimage.transform import estimate_transform
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
         approx_t = estimate_transform('similarity',
