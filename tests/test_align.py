@@ -104,7 +104,7 @@ class TestAlign(unittest.TestCase):
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
 
     def test_get_transform_givensources(self):
-        from skimage.transform import estimate_transform
+        from skimage.transform import estimate_transform, matrix_transform
         source = np.array([[1.4, 2.2], [5.3, 1.0], [3.7, 1.5],
                            [10.1, 9.6], [1.3, 10.2], [7.1, 2.0]])
         nsrc = source.shape[0]
@@ -118,14 +118,19 @@ class TestAlign(unittest.TestCase):
         dest = (mm.dot(source.T) + transl).T
         t_true = estimate_transform('similarity', source, dest)
 
-        # disorder dest points so they don't match the oder of source
+        # disorder dest points so they don't match the order of source
         np.random.shuffle(dest)
 
-        t, __ = aa.get_transform(source, dest)
+        t, (src_pts, dst_pts) = aa.get_transform(source, dest)
         self.assertLess(t_true.scale - t.scale, 1E-10)
         self.assertLess(t_true.rotation - t.rotation, 1E-10)
         self.assertLess(np.linalg.norm(t_true.translation - t.translation),
                         1E-10)
+        self.assertEqual(src_pts.shape[0], dst_pts.shape[0])
+        self.assertEqual(src_pts.shape[1], 2)
+        self.assertEqual(dst_pts.shape[1], 2)
+        dst_pts_test = matrix_transform(src_pts, t.params)
+        self.assertLess(np.linalg.norm(dst_pts_test - dst_pts), 1E-10)
 
     def test_align_image(self):
         def compare_image(the_image):

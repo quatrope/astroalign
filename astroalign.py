@@ -206,9 +206,12 @@ target:
     min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
     best_t, inlier_ind = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
                                  min_matches)
-    inliers = matches[inlier_ind]
-    d1, d2, d3 = inliers.shape
-    s, d = inliers.reshape(d1 * d2, d3).T
+    triangle_inliers = matches[inlier_ind]
+    d1, d2, d3 = triangle_inliers.shape
+    inl_arr = triangle_inliers.reshape(d1 * d2, d3)
+    inl_unique = set(tuple(pair) for pair in inl_arr)
+    inl_arr_unique = _np.array(list(list(apair) for apair in inl_unique))
+    s, d = inl_arr_unique.T
 
     return best_t, (source_controlp[s], target_controlp[d])
 
