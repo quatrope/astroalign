@@ -218,6 +218,39 @@ target:
     return best_t, (source_controlp[s], target_controlp[d])
 
 
+def apply_transform(transform, source, target):
+    """Applies the transformation transform to source.
+The output image will have the same shape as target.
+
+source and target are 2D arrays (not necessarily the same shape) and
+transform is a SimilarityTransform object.
+
+The returned image will be the same type as source.
+Masks will be transformed the same way as source."""
+
+    from skimage.transform import warp
+    aligned_image = warp(source, inverse_map=transform.inverse,
+                         output_shape=target.shape, order=3, mode='constant',
+                         cval=_np.median(source), clip=False,
+                         preserve_range=False)
+
+    if isinstance(source, _np.ma.MaskedArray):
+        # it could be that source's mask is just set to False
+        if isinstance(source.mask, _np.ndarray):
+            aligned_image_mask = warp(source.mask.astype('float32'),
+                                      inverse_map=transform.inverse,
+                                      output_shape=target.shape,
+                                      cval=1.0)
+            aligned_image_mask = aligned_image_mask > 0.4
+            aligned_image = _np.ma.array(aligned_image,
+                                         mask=aligned_image_mask)
+        else:
+            # If source is masked array with mask set to false, we
+            # return the same
+            aligned_image = _np.ma.array(aligned_image)
+    return aligned_image
+
+
 def align_image(source, target):
     """Return a transformed (aligned) image of source that coincides
     pixel to pixel with target.
@@ -231,32 +264,8 @@ def align_image(source, target):
     Masks will be transformed the same way as source.
 
     Return aligned_image"""
-    from skimage.transform import warp
-
-    source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
-    target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
-
-    t, __ = get_transform(source=source_controlp, target=target_controlp)
-
-    aligned_image = warp(source, inverse_map=t.inverse,
-                         output_shape=target.shape, order=3, mode='constant',
-                         cval=_np.median(source), clip=False,
-                         preserve_range=False)
-
-    if isinstance(source, _np.ma.MaskedArray):
-        # it could be that source's mask is just set to False
-        if isinstance(source.mask, _np.ndarray):
-            aligned_image_mask = warp(source.mask.astype('float32'),
-                                      inverse_map=t.inverse,
-                                      output_shape=target.shape,
-                                      cval=1.0)
-            aligned_image_mask = aligned_image_mask > 0.4
-            aligned_image = _np.ma.array(aligned_image,
-                                         mask=aligned_image_mask)
-        else:
-            # If source is masked array with mask set to false, we
-            # return the same
-            aligned_image = _np.ma.array(aligned_image)
+    t, __ = get_transform(source=source, target=target)
+    aligned_image = apply_transform(t, source, target)
     return aligned_image
 
 
@@ -314,7 +323,6 @@ def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
 This implementation written from pseudocode found at
 http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
 
-{{{
 Given:
     data: a set of data points
     model: a model that can be fitted to data points
@@ -327,7 +335,6 @@ Given:
 Return:
     bestfit: model parameters which best fit the data (or nil if no good model
               is found)
-}}}
 """
     iterations = 0
     bestfit = None
