@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -111,6 +112,10 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# -- Options for Napoleon -------------------------------------------------
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 
 # -- Options for HTML output ----------------------------------------------
 

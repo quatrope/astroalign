@@ -1,20 +1,19 @@
 """
 ASTROALIGN is a simple package that will try to align two stellar astronomical
-images.
+images, especially when there is no WCS information available.
 
 It does so by finding similar 3-point asterisms (triangles) in both images and
 deducing the affine transformation between them.
 
-General align routines try to match interesting points, using corner detection
-routines to make the point correspondence.
-
+General registration routines try to match feature points, using corner
+detection routines to make the point correspondence.
 These generally fail for stellar astronomical images, since stars have very
 little stable structure and so, in general, indistinguishable from each other.
 
-Asterism matching is more robust and closer to the human way of matching
-images.
+Asterism matching is more robust, and closer to the human way of matching
+stellar images.
 
-Astro align can match images of very different field of view, point-spread
+Astroalign can match images of very different field of view, point-spread
 functions, seeing and atmospheric conditions.
 
 (c) Martin Beroiz
@@ -29,9 +28,30 @@ from skimage.transform import matrix_transform # noqa
 
 
 MAX_CONTROL_POINTS = 50
+"""The maximum control points (stars) to use to build the invariants.
+
+Default: 50"""
+
 PIXEL_TOL = 2
+"""The pixel distance tolerance to assume two invariant points are the same.
+
+Default: 2"""
+
 MIN_MATCHES_FRACTION = 0.8
+"""The minimum fraction of triangle matches to accept a transformation.
+
+If the minimum fraction yields more than 10 triangles, 10 is used instead.
+
+Default: 0.8
+"""
+
 NUM_NEAREST_NEIGHBORS = 5
+"""
+The number of nearest neighbors of a given star (including itself) to construct
+the triangle invariants.
+
+Default: 5
+"""
 
 
 def _invariantfeatures(x1, x2, x3):
@@ -131,21 +151,31 @@ class _MatchTransform:
 
 
 def get_transform(source, target):
-    """Return a SimilarityTransform object T that maps pixel x, y indices
-from the source image s = (x, y) into the target (destination) image t = (x, y)
-t = T * s.
-T contains parameters of the tranformation T.rotation, T.translation, T.scale
+    """Estimate the transform between ``source`` and ``target``.
 
-sReturn an iterable of matched sources:
-    (source_control_points, target_control_points)
+    Return a SimilarityTransform object ``T`` that maps pixel x, y indices from
+    the source image s = (x, y) into the target (destination) image t = (x, y).
+    T contains parameters of the tranformation: ``T.rotation``,
+    ``T.translation``, ``T.scale``, ``T.params``.
 
-source:
-  Either a numpy array of the source image to be transformed
-  or an interable of (x, y) coordinates of the source control points.
-target:
-  Either a numpy array of the target (destination) image
-  or an interable of (x, y) coordinates of the target control points.
-"""
+    Args:
+        source (numpy array): Either a numpy array of the source image to be
+            transformed or an interable of (x, y) coordinates of the target
+            control points.
+        target (numpy array): Either a numpy array of the target (destination)
+            image or an interable of (x, y) coordinates of the target
+            control points.
+
+    Returns:
+        The transformation object and a tuple of corresponding star positions
+        in source and target.::
+
+            T, (source_pos_array, target_pos_array)
+
+    Raises:
+        TypeError: If input type of ``source`` or ``target`` is not supported.
+        Exception: If it cannot find more than 3 stars on any input.
+    """
     from scipy.spatial import KDTree
 
     try:
@@ -219,14 +249,22 @@ target:
 
 
 def apply_transform(transform, source, target):
-    """Applies the transformation transform to source.
-The output image will have the same shape as target.
+    """Applies the transformation ``transform`` to ``source``.
 
-source and target are 2D arrays (not necessarily the same shape) and
-transform is a SimilarityTransform object.
+    The output image will have the same shape as ``target``.
 
-The returned image will be the same type as source.
-Masks will be transformed the same way as source."""
+    Args:
+        transform: A scikit-image ``SimilarityTransform`` object.
+        source (numpy array): A 2D numpy array of the source image to be
+            transformed.
+        target (numpy array): A 2D numpy array of the target image. Only used
+            to set the output image shape.
+
+    Return:
+        A numpy 2D array of the transformed source. If source is a masked array
+        the returned image will also be a masked array with outside pixels set
+        to True.
+    """
 
     from skimage.transform import warp
     aligned_image = warp(source, inverse_map=transform.inverse,
@@ -252,18 +290,19 @@ Masks will be transformed the same way as source."""
 
 
 def align_image(source, target):
-    """Return a transformed (aligned) image of source that coincides
-    pixel to pixel with target.
+    """Transform ``source`` to coincide pixel to pixel with ``target``.
 
-    align_image accepts a numpy array or a numpy masked array, and returns a
-    realigned image interpolated to coincide with target.
-    Sometimes bad CCD sections can confuse the alignment.
-    Bad pixels can be masked (True on bad) in a masked array to facilitate the
-    process.
-    The returned image will be the same type as source.
-    Masks will be transformed the same way as source.
+    Args:
+        source (numpy array): A 2D numpy array of the source image to be
+            transformed.
+        target (numpy array): A 2D numpy array of the target image. Only used
+            to set the output image shape.
 
-    Return aligned_image"""
+    Return:
+        A numpy 2D array of the transformed source. If source is a masked array
+        the returned image will also be a masked array with outside pixels set
+        to True.
+    """
     t, __ = get_transform(source=source, target=target)
     aligned_image = apply_transform(t, source, target)
     return aligned_image
