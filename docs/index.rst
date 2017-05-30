@@ -27,7 +27,6 @@ Guide:
    tutorial
    methods
    mask
-   code
 
 
 Indices and tables
