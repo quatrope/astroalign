@@ -1,5 +1,5 @@
-The Code
-========
+Module Summary
+==============
 
 .. toctree::
    :maxdepth: 2
