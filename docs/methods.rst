@@ -1,7 +1,7 @@
 .. _methods:
 
-Other Methods
-=============
+Module Methods
+==============
 
 .. toctree::
    :maxdepth: 2
