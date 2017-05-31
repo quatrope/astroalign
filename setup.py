@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='astroalign',
-      version='1.0.dev1',
+      version='1.0.dev2',
       description='Astrometric Alignment of Images',
       author='Martin Beroiz',
       author_email='martinberoiz@gmail.com',
