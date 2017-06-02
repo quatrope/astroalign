@@ -64,7 +64,7 @@ author = u'Martin Beroiz'
 # built documents.
 #
 # Get the version from astroalign file itself (not imported)
-with file(os.path.join('..', 'astroalign.py')) as f:
+with open(os.path.join('..', 'astroalign.py'), 'r') as f:
     for line in f:
         if line.startswith('__version__'):
             _, _, __version__ = line.replace("'", '').split()

@@ -1,7 +1,14 @@
 from setuptools import setup
 
+# Get the version from astroalign file itself (not imported)
+with open('astroalign.py', 'r') as f:
+    for line in f:
+        if line.startswith('__version__'):
+            _, _, aa_version = line.replace("'", '').split()
+            break
+
 setup(name='astroalign',
-      version='1.0.dev2',
+      version=aa_version,
       description='Astrometric Alignment of Images',
       author='Martin Beroiz',
       author_email='martinberoiz@gmail.com',
