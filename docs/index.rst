@@ -14,7 +14,9 @@ Asterism matching is more robust, and closer to the human way of matching stella
 
 Astroalign can match images of very different field of view, point-spread functions, seeing and atmospheric conditions.
 
-It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
+.. warning::
+
+    It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
 
 
 Guide:
