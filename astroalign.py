@@ -308,6 +308,13 @@ def register(source, target):
     return aligned_image
 
 
+def align_image(ref_image, img2transf, n_ref_src=50, n_img_src=70, px_tol=2.):
+    """Alias for ``register`` for backwards compatibility.
+
+    This is deprecated, use ``register`` instead."""
+    return register(img2transf, ref_image)
+
+
 def _find_sources(img):
     "Return sources (x, y) sorted by brightness."
 
