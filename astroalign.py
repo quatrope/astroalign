@@ -309,10 +309,15 @@ def register(source, target):
 
 
 def align_image(ref_image, img2transf, n_ref_src=50, n_img_src=70, px_tol=2.):
-    """Alias for ``register`` for backwards compatibility.
-
-    This is deprecated, use ``register`` instead."""
+    "Deprecated: Alias for ``register`` for backwards compatibility."
     return register(img2transf, ref_image)
+
+
+def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
+                          min_matches_fraction=0.8, invariant_map=None):
+    "Deprecated: Alias for ``find_transform`` for backwards compatibility."
+    transf, _ = find_transform(ref_srcs, test_srcs)
+    return transf.params
 
 
 def _find_sources(img):
