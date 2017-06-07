@@ -15,9 +15,9 @@ and mask bad pixels with True, following the numpy masked array convention.
 You can now call astroalign methods in the usual way::
 
     >>> import astroalign as aa
-    >>> aligned_image = aa.align_image(myarray, target)
+    >>> registered_image = aa.register(myarray, target)
 
-The type of the returned ``aligned_image`` wil be the same type as the input image, regardless of the type of ``target``.
+The type of the returned ``registered_image`` wil be the same type as the input image, regardless of the type of ``target``.
 
 That is, if the source image is a masked array, the output will also be a masked array, 
 with the masked transformed in the same way as the source image and filled with True

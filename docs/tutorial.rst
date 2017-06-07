@@ -9,16 +9,16 @@ Suppose we do not have WCS information, but we are confident that we could do it
 
 In this particular use case, astroalign can be of great help to automatize the process.
 
-After we load our images into numpy array, we simple choose one to be the source image and the other to be the target.
+After we load our images into numpy arrays, we simple choose one to be the source image and the other to be the target.
 
 The usage for this simple most common case would be as follows::
 
     >>> import astroalign as aa
-    >>> aligned_image = aa.align_image(source, target)
+    >>> registered_image = aa.register(source, target)
 
-``aligned_image`` is now a transformed (numpy array) image of ``source`` that will match pixel to pixel to ``target``.
+``registered_image`` is now a transformed (numpy array) image of ``source`` that will match pixel to pixel to ``target``.
 
-If ``source`` is a masked array, ``aligned_image`` will have a mask transformed 
+If ``source`` is a masked array, ``registered_image`` will have a mask transformed 
 like ``source`` with pixels outside the boundary masked with True
 (read more in :ref:`mask`).
 
@@ -27,15 +27,15 @@ Finding the transformation
 
 In some cases it may be necessary to inspect first the transformation parameters before applying it,
 or we may be interested only in a star to star correspondance between the images.
-For those cases, we can use ``get_transform``.
+For those cases, we can use ``find_transform``.
 
-``get_transform`` will return a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
+``find_transform`` will return a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
 and the transformation parameters. 
 It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on 
 the ``target`` image.::
 
 
-    >>> transf, (source_list, target_list) = aa.get_transform(source, target)
+    >>> transf, (source_list, target_list) = aa.find_transform(source, target)
 
 source and target here can be either numpy arrays of the image pixels, or any iterable (x, y) pair, 
 corresponding to a star position.
@@ -44,10 +44,10 @@ The transformation parameters can be found in ``transf.rotation``, ``transf.tras
 and the transformation matrix in ``transf.params``.
 
 If the transformation is satisfactory we can apply it to the image with ``apply_transform``.
-For example::
+Continuing our example::
 
     >>> if transf.rotation > MIN_ROT:
-    ...     aligned_image = aa.apply_transform(transf, source, target)
+    ...     registered_image = aa.apply_transform(transf, source, target)
 
 ----------------------------
 
