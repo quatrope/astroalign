@@ -103,7 +103,7 @@ class TestAlign(unittest.TestCase):
         self.star_ref_pos = np.array(zip(self.ref_cols, self.ref_rows))
         self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
 
-    def test_get_transform_givensources(self):
+    def test_find_transform_givensources(self):
         from skimage.transform import estimate_transform, matrix_transform
         source = np.array([[1.4, 2.2], [5.3, 1.0], [3.7, 1.5],
                            [10.1, 9.6], [1.3, 10.2], [7.1, 2.0]])
@@ -121,7 +121,7 @@ class TestAlign(unittest.TestCase):
         # disorder dest points so they don't match the order of source
         np.random.shuffle(dest)
 
-        t, (src_pts, dst_pts) = aa.get_transform(source, dest)
+        t, (src_pts, dst_pts) = aa.find_transform(source, dest)
         self.assertLess(t_true.scale - t.scale, 1E-10)
         self.assertLess(t_true.rotation - t.rotation, 1E-10)
         self.assertLess(np.linalg.norm(t_true.translation - t.translation),
@@ -132,7 +132,7 @@ class TestAlign(unittest.TestCase):
         dst_pts_test = matrix_transform(src_pts, t.params)
         self.assertLess(np.linalg.norm(dst_pts_test - dst_pts), 1E-10)
 
-    def test_align_image(self):
+    def test_register(self):
         def compare_image(the_image):
             """Return the fraction of sources found in the reference image"""
             # pixel comparison is not good, doesn't work. Compare catalogs.
@@ -160,12 +160,12 @@ class TestAlign(unittest.TestCase):
             fraction_found = float(num_sources) / float(len(allxy))
             return fraction_found
 
-        image_aligned = aa.align_image(source=self.image,
-                                       target=self.image_ref)
+        registered_img = aa.register(source=self.image,
+                                     target=self.image_ref)
 
         # Test that image returned is not masked
-        self.assertIs(type(image_aligned), np.ndarray)
-        fraction = compare_image(image_aligned)
+        self.assertIs(type(registered_img), np.ndarray)
+        fraction = compare_image(registered_img)
         self.assertGreater(fraction, 0.85)
 
         # Test masked arrays
@@ -178,9 +178,9 @@ class TestAlign(unittest.TestCase):
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 
         def testalignment(source, target):
-            image_aligned = aa.align_image(source=source, target=target)
-            self.assertIs(type(image_aligned), type(source))
-            fraction = compare_image(image_aligned)
+            registered_img = aa.register(source=source, target=target)
+            self.assertIs(type(registered_img), type(source))
+            fraction = compare_image(registered_img)
             self.assertGreater(fraction, 0.85)
 
         # Test it works with masked image:

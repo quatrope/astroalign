@@ -150,7 +150,7 @@ class _MatchTransform:
         return error
 
 
-def get_transform(source, target):
+def find_transform(source, target):
     """Estimate the transform between ``source`` and ``target``.
 
     Return a SimilarityTransform object ``T`` that maps pixel x, y indices from
@@ -159,10 +159,10 @@ def get_transform(source, target):
     ``T.translation``, ``T.scale``, ``T.params``.
 
     Args:
-        source (numpy array): Either a numpy array of the source image to be
+        source (array-like): Either a numpy array of the source image to be
             transformed or an interable of (x, y) coordinates of the target
             control points.
-        target (numpy array): Either a numpy array of the target (destination)
+        target (array-like): Either a numpy array of the target (destination)
             image or an interable of (x, y) coordinates of the target
             control points.
 
@@ -289,7 +289,7 @@ def apply_transform(transform, source, target):
     return aligned_image
 
 
-def align_image(source, target):
+def register(source, target):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
     Args:
@@ -303,7 +303,7 @@ def align_image(source, target):
         the returned image will also be a masked array with outside pixels set
         to True.
     """
-    t, __ = get_transform(source=source, target=target)
+    t, __ = find_transform(source=source, target=target)
     aligned_image = apply_transform(t, source, target)
     return aligned_image
 
