@@ -100,8 +100,8 @@ class TestAlign(unittest.TestCase):
         self.new_cols -= kw // 2
         self.new_rows -= kh // 2
 
-        self.star_ref_pos = np.array(zip(self.ref_cols, self.ref_rows))
-        self.star_new_pos = np.array(zip(self.new_cols, self.new_rows))
+        self.star_ref_pos = np.array(list(zip(self.ref_cols, self.ref_rows)))
+        self.star_new_pos = np.array(list(zip(self.new_cols, self.new_rows)))
 
     def test_find_transform_givensources(self):
         from skimage.transform import estimate_transform, matrix_transform
@@ -171,9 +171,9 @@ class TestAlign(unittest.TestCase):
         # Test masked arrays
         # Make some masks...
         mask = np.zeros(self.image.shape, dtype='bool')
-        mask[self.h / 10:self.h / 10 + 10, :] = True
+        mask[self.h // 10:self.h // 10 + 10, :] = True
         mask_ref = np.zeros(self.image_ref.shape, dtype='bool')
-        mask_ref[:, self.w / 10:self.w / 10 + 10] = True
+        mask_ref[:, self.w // 10:self.w // 10 + 10] = True
         image_masked = np.ma.array(self.image, mask=mask)
         image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
 

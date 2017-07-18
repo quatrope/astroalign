@@ -71,7 +71,7 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
     x1, x2, x3 = sources[vertex_indices]
 
     side_ind = _np.array([(ind1, ind2), (ind2, ind3), (ind3, ind1)])
-    side_lengths = map(_np.linalg.norm, (x1 - x2, x2 - x3, x3 - x1))
+    side_lengths = list(map(_np.linalg.norm, (x1 - x2, x2 - x3, x3 - x1)))
     l1_ind, l2_ind, l3_ind = _np.argsort(side_lengths)
 
     # the most common vertex in the list of vertices for two sides is the
@@ -229,7 +229,7 @@ def find_transform(source, target):
     # t1 is an asterism in source, t2 in target
     for t1, t2_list in zip(source_asterisms, matches_list):
         for t2 in target_asterisms[t2_list]:
-            matches.append(zip(t1, t2))
+            matches.append(list(zip(t1, t2)))
     matches = _np.array(matches)
 
     inv_model = _MatchTransform(source_controlp, target_controlp)
