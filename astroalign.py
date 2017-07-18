@@ -21,7 +21,7 @@ functions, seeing and atmospheric conditions.
 
 import numpy as _np
 
-__version__ = '1.0.dev3'
+__version__ = '1.0'
 
 from skimage.transform import estimate_transform
 from skimage.transform import matrix_transform # noqa
