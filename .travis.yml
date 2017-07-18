@@ -9,12 +9,12 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda2/bin:$PATH
   - conda update --yes conda
-  - pip install --upgrade pip
-  - pip install codecov
 
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
+  - pip install scikit-image
   - pip install astropy sep
+  - pip install codecov
 
 script:
   - python setup.py test

@@ -6,16 +6,15 @@
 
 **ASTROALIGN** is a simple package that will try to align two stellar astronomical images, especially when there is no WCS information available.
 
-It does so by finding similar 3-point asterisms (triangles) in both images and deducing the
-affine transformation between them.
+It does so by finding similar 3-point asterisms (triangles) in both images and deducing the affine transformation between them.
 
-General align routines try to match interesting points, using corner detection routines to make the point correspondence.
+General registration routines try to match feature points, using corner
+detection routines to make the point correspondence.
+These generally fail for stellar astronomical images, since stars have very
+little stable structure and so, in general, indistinguishable from each other.
+Asterism matching is more robust, and closer to the human way of matching stellar images.
 
-These generally fail for stellar astronomical images, since stars have very little stable structure and so, in general, indistinguishable from each other.
-
-Asterism matching is more robust and closer to the human way of matching images.
-
-Astro align can match images of very different field of view, point-spread functions, seeing and atmospheric conditions.
+Astro align can match images of very different field of view, point-spread function, seeing and atmospheric conditions.
 
 It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
 
@@ -25,28 +24,30 @@ It may not work, or work with special care, on images of extended objects with f
 
 Using setuptools:
 
-    pip install astroalign
+    $ pip install astroalign
 
 or from this distribution with
 
-    python setup.py install
+    $ python setup.py install
 
 ***
 
 Usage example
 
     >>> import astroalign as aa
-    >>> aligned_image = aa.align_image(reference_image, image2transform)
+    >>> aligned_image = aa.register(source_image, target_image)
 
-In this example image2transform will be interpolated by a transformation to coincide pixel to pixel with reference_image and stored in aligned_image.
+In this example `source_image` will be interpolated by a transformation to coincide pixel to pixel with `target_image` and stored in `aligned_image`.
 
-Sometimes, CCD defects can confuse the alignment. In cases where it's necessary you can mask out bad regions using a mask (True on bad) and pass a [numpy masked array](http://docs.scipy.org/doc/numpy/reference/maskedarray.html) that will ignore the masked pixels. 
+If we are only interested in knowing the transformation and the correspondence of control points in both images, use `find_transform` will return the transformation in a scikit-image SimilarityTransform object and a list of stars in source with the corresponding stars in target.
 
-The returned aligned_image will be the same type as image2transform and its mask, if any, will be transformed in the same way as the image.
+    >>> transf, (s_list, t_list) = aa.find_transform(source, target)
 
-Pixels outside the boundaries of the transformation are filled with the image median value and masked True if mask is provided.
+`source` and `target` can each either be the numpy array of the image, or an iterable of (x, y) pairs of star positions on the image.
 
-More information available on docstrings
+The returned `transf` object is a scikit-image [`SimilarityTranform`](http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform) object that contains the transformation matrix along with the scale, rotation and translation parameters.
+
+`s_list` and `t_list` are numpy arrays of (x, y) point correspondence between `source` and `target`. `transf` applied to `s_list` will approximately render `t_list`.
 
 ***
 
