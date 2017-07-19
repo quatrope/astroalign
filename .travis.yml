@@ -8,6 +8,7 @@ before_install:
   - pip install --upgrade pip setuptools wheel
 
 install:
+  - pip uninstall -y numpy
   - pip install --only-binary=numpy,scipy numpy scipy
   - pip install scikit-image
   - pip install astropy sep
