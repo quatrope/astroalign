@@ -126,7 +126,14 @@ napoleon_numpy_docstring = False
 
 # -- Options for autodoc --------------------------------------------------
 
-autodoc_mock_imports = ["scipy", "numpy", "skimage", "sep"]
+autodoc_mock_imports = [
+    "scipy", "scipy.spatial", "scipy.spatial.KDTree", "numpy",
+    "skimage", "skimage.transform",
+    "skimage.transform.estimate_transform",
+    "skimage.transform.matrix_transform",
+    "skimage.transform.warp",
+    "sep",
+    ]
 
 # -- Options for HTML output ----------------------------------------------
 
