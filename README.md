@@ -18,6 +18,8 @@ Astro align can match images of very different field of view, point-spread funct
 
 It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
 
+You can find a Jupyter notebook example with the main features at [http://toros-astro.github.io/astroalign/](http://toros-astro.github.io/astroalign/).
+
 ***
 
 ## Installation
