@@ -18,7 +18,7 @@ The usage for this simple most common case would be as follows::
 
 ``registered_image`` is now a transformed (numpy array) image of ``source`` that will match pixel to pixel to ``target``.
 
-If ``source`` is a masked array, ``registered_image`` will have a mask transformed 
+If ``source`` is a masked array, ``registered_image`` will have a mask transformed
 like ``source`` with pixels outside the boundary masked with True
 (read more in :ref:`mask`).
 
@@ -26,21 +26,21 @@ Finding the transformation
 --------------------------
 
 In some cases it may be necessary to inspect first the transformation parameters before applying it,
-or we may be interested only in a star to star correspondance between the images.
+or we may be interested only in a star to star correspondence between the images.
 For those cases, we can use ``find_transform``.
 
 ``find_transform`` will return a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
-and the transformation parameters. 
-It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on 
+and the transformation parameters.
+It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on
 the ``target`` image.::
 
 
     >>> transf, (source_list, target_list) = aa.find_transform(source, target)
 
-source and target here can be either numpy arrays of the image pixels, or any iterable (x, y) pair, 
+source and target here can be either numpy arrays of the image pixels, or any iterable (x, y) pair,
 corresponding to a star position.
 
-The transformation parameters can be found in ``transf.rotation``, ``transf.traslation``, ``transf.scale`` 
+The transformation parameters can be found in ``transf.rotation``, ``transf.traslation``, ``transf.scale``
 and the transformation matrix in ``transf.params``.
 
 If the transformation is satisfactory we can apply it to the image with ``apply_transform``.
@@ -49,8 +49,46 @@ Continuing our example::
     >>> if transf.rotation > MIN_ROT:
     ...     registered_image = aa.apply_transform(transf, source, target)
 
-----------------------------
+If you know the star-to-star correspondence
+-------------------------------------------
 
-As a convenience, ``estimate_transform`` and ``matrix_transform`` from scikit-image are imported in astroalign as well.
+As a convenience, `estimate_transform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.estimate_transform>`_
+from `scikit-image` is imported to astroalign.
+
+If for any reason you know which star corresponds to what other, you can call ``estimate_transform``.
+
+Let us suppose we know the correspondence:
+
+- (127.03, 85.98) in source --> (175.13, 111.36) in target
+- (23.11, 31.87) in source --> (0.58, 119.04) in target
+- (98.84, 142.99) in source --> (181.55, 206.49) in target
+- (150.93, 85.02) in source --> (205.60, 91.89) in target
+- (137.99, 12.88) in source --> (134.61, 7.94) in target
+
+Then we can estimate the transform::
+
+    >>> src = np.array([(127.03, 85.98), (23.11, 31.87), (98.84, 142.99),
+    ...                 (150.93, 85.02), (137.99, 12.88)])
+    >>> dst = np.array([(175.13, 111.36), (0.58, 119.04), (181.55, 206.49),
+    ...                 (205.60, 91.89), (134.61, 7.94)])
+    >>> tform = aa.estimate_transform('affine', src, dst)
+
+And apply it to an image with ``apply_transform`` or to a set of points with ``matrix_transform``.
+
+Applying a transformation to a set of points
+--------------------------------------------
+
+As a convenience, `matrix_transform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.matrix_transform>`_
+from `scikit-image` is imported to astroalign.
+
+To apply a known transform to a set of points, we use `matrix_transform`.
+Following the example in the previous section::
+
+    >>> dst_calc = aa.matrix_transform(src, tform.params)
+
+``dst_calc`` should be a 5 by 2 array similar to the ``dst`` array.
+
+
+----------------------------------------
 
 See :ref:`methods` for more information.
