@@ -216,6 +216,13 @@ class TestAlign(unittest.TestCase):
         fraction_found = float(num_sources) / float(len(srcs))
         self.assertGreater(fraction_found, 0.85)
 
+    def test_dtypes(self):
+        aa.register(self.image.astype('float16'), self.image_ref)
+        aa.register(self.image.astype('float32'), self.image_ref)
+        aa.register(self.image.astype('float64'), self.image_ref)
+        aa.register(self.image.astype('int32'), self.image_ref)
+        aa.register(self.image.astype('int64'), self.image_ref)
+
 
 if __name__ == "__main__":
     unittest.main()
