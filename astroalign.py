@@ -270,7 +270,7 @@ def apply_transform(transform, source, target):
     aligned_image = warp(source, inverse_map=transform.inverse,
                          output_shape=target.shape, order=3, mode='constant',
                          cval=_np.median(source), clip=False,
-                         preserve_range=False)
+                         preserve_range=True)
 
     if isinstance(source, _np.ma.MaskedArray):
         # it could be that source's mask is just set to False
