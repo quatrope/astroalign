@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
 [![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/49095023.svg)](https://zenodo.org/badge/latestdoi/49095023)
 
 **ASTROALIGN** is a simple package that will try to align two stellar astronomical images, especially when there is no WCS information available.
 
