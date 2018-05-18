@@ -223,6 +223,15 @@ class TestAlign(unittest.TestCase):
         aa.register(self.image.astype('int32'), self.image_ref)
         aa.register(self.image.astype('int64'), self.image_ref)
 
+    def test_consistent_invert(self):
+        t, __ = aa.find_transform(self.image, self.image_ref)
+        tinv, __ = aa.find_transform(self.image_ref, self.image)
+        rpoint = np.random.rand(3) * self.h
+        rpoint[2] = 1.0
+        rtransf = tinv.params.dot(t.params.dot(rpoint))
+        err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
+        self.assertLess(err, 1E-2)
+
 
 if __name__ == "__main__":
     unittest.main()
