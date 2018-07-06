@@ -38,7 +38,7 @@ or from this distribution with
 
 ***
 
-Usage example
+## Usage example
 
     >>> import astroalign as aa
     >>> aligned_image = aa.register(source_image, target_image)
