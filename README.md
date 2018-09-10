@@ -1,4 +1,6 @@
-# ASTROALIGN
+<img src="docs/aa_bw.jpg" height="150" />
+
+***
 
 [![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
 [![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
@@ -6,7 +8,6 @@
 [![DOI](https://zenodo.org/badge/49095023.svg)](https://zenodo.org/badge/latestdoi/49095023)
 [![Updates](https://pyup.io/repos/github/toros-astro/astroalign/shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 [![Python 3](https://pyup.io/repos/github/toros-astro/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
-
 
 **ASTROALIGN** is a simple package that will try to align two stellar astronomical images, especially when there is no WCS information available.
 

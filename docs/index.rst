@@ -1,5 +1,9 @@
 .. _index:
 
+.. image:: aa_bw.jpg
+    :width: 200px
+    :align: left
+
 Astroalign documentation
 ========================
 
@@ -25,7 +29,7 @@ Guide:
 
 .. toctree::
    :maxdepth: 2
-   
+
    installation
    tutorial
    methods
