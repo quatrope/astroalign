@@ -368,6 +368,9 @@ def _find_sources(img):
 #
 # Modified by Martin Beroiz
 
+class MaxIterError(Exception):
+    pass
+
 def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
     """fit model parameters to data using the RANSAC algorithm
 
@@ -412,6 +415,6 @@ Return:
             break
         iterations += 1
     if bestfit is None:
-        raise ValueError("Did not meet fit acceptance criteria")
+        raise MaxIterError("Max iterations exceeded while trying to find acceptable transformation.")
 
     return bestfit, best_inlier_idxs
