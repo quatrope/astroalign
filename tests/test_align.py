@@ -232,6 +232,14 @@ class TestAlign(unittest.TestCase):
         err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
         self.assertLess(err, 1E-2)
 
+    # Commented out because will not work in python 2.7
+    # def test_align_image_deprecated(self):
+    #    with self.assertWarns(Warning):
+    #        aa.align_image(self.image_ref, self.image)
+    #
+    #    with self.assertWarns(Warning):
+    #        aa.find_affine_transform(self.image_ref, self.image)
+
 
 if __name__ == "__main__":
     unittest.main()
