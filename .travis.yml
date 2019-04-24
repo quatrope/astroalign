@@ -12,7 +12,6 @@ install:
   - pip install codecov
 
 script:
-  - python setup.py test
   - coverage run --source=astroalign setup.py test
 
 after_success:
