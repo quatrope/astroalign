@@ -22,6 +22,10 @@ If ``source`` is a masked array, ``registered_image`` will have a mask transform
 like ``source`` with pixels outside the boundary masked with True
 (read more in :ref:`mask`).
 
+.. warning::
+    Flux may not be conserved during the transform.
+
+
 Finding the transformation
 --------------------------
 
@@ -88,6 +92,18 @@ Following the example in the previous section::
 
 ``dst_calc`` should be a 5 by 2 array similar to the ``dst`` array.
 
+
+Dealing with hot pixels
+-----------------------
+
+Hot pixels always appear on the same position of the CCD.
+If your image is dominated by hot pixels, the source detection algorithm may pick those up
+and output the identity tranformation.
+
+To avoid this, you can use `CCDProc's cosmicray_lacosmic <https://ccdproc.readthedocs.io/en/latest/api/ccdproc.cosmicray_lacosmic.html>`_ to clean the image before trying registration::
+
+    from ccdproc import cosmicray_lacosmic as lacosmic
+    clean_image = lacosmic(myimage)
 
 ----------------------------------------
 

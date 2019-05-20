@@ -14,5 +14,4 @@ change the directory to where setup.py is, and install using setuptools::
 
 or pip::
 
-    pip install -e .
-
+    pip install .
