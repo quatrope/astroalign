@@ -34,6 +34,7 @@ Guide:
    tutorial
    methods
    mask
+   api
 
 
 Indices and tables

@@ -1,0 +1,5 @@
+API
+===
+
+.. automodule:: astroalign
+   :members:
