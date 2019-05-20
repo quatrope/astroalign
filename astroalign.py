@@ -265,28 +265,18 @@ def apply_transform(transform, source, target):
         the returned image will also be a masked array with outside pixels set
         to True.
     """
-
     from skimage.transform import warp
     aligned_image = warp(source, inverse_map=transform.inverse,
                          output_shape=target.shape, order=3, mode='constant',
                          cval=_np.median(source), clip=False,
                          preserve_range=True)
-
-    if isinstance(source, _np.ma.MaskedArray):
-        # it could be that source's mask is just set to False
-        if isinstance(source.mask, _np.ndarray):
-            aligned_image_mask = warp(source.mask.astype('float32'),
+    footprint = warp(_np.zeros(source.shape, dtype='float32'),
                                       inverse_map=transform.inverse,
                                       output_shape=target.shape,
                                       cval=1.0)
-            aligned_image_mask = aligned_image_mask > 0.4
-            aligned_image = _np.ma.array(aligned_image,
-                                         mask=aligned_image_mask)
-        else:
-            # If source is masked array with mask set to false, we
-            # return the same
-            aligned_image = _np.ma.array(aligned_image)
-    return aligned_image
+    footprint = footprint > 0.4
+
+    return aligned_image, footprint
 
 
 def register(source, target):
@@ -304,24 +294,8 @@ def register(source, target):
         to True.
     """
     t, __ = find_transform(source=source, target=target)
-    aligned_image = apply_transform(t, source, target)
-    return aligned_image
-
-
-def align_image(ref_image, img2transf, n_ref_src=50, n_img_src=70, px_tol=2.):
-    "Deprecated: Alias for `register` for backwards compatibility."
-    import warnings
-    warnings.warn("align_image is deprecated, use register instead.")
-    return register(img2transf, ref_image)
-
-
-def find_affine_transform(test_srcs, ref_srcs, max_pix_tol=2.,
-                          min_matches_fraction=0.8, invariant_map=None):
-    "Deprecated: Alias for `find_transform` for backwards compatibility."
-    import warnings
-    warnings.warn("find_affine_transform is deprecated, use find_transform instead.")
-    transf, _ = find_transform(ref_srcs, test_srcs)
-    return transf.params
+    aligned_image, footprint = apply_transform(t, source, target)
+    return aligned_image, footprint
 
 
 def _find_sources(img):

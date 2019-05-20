@@ -49,7 +49,7 @@ class TestAlign(unittest.TestCase):
                                            high=int(big_r) + self.h / 2,
                                            size=(num_stars,))
         # Fluxes of stars
-        a, m = 0.8, 3. * self.image_ref.std()
+        a, m = 0.8, 3. * self.image_ref.std()  # This are Pareto dist coeff's
         self.star_f = (1. + np.random.pareto(a, num_stars)) * m
         # self.star_f = 1.*np.random.exponential(1600., size=(num_stars,))
 
@@ -108,12 +108,11 @@ class TestAlign(unittest.TestCase):
         source = np.array([[1.4, 2.2], [5.3, 1.0], [3.7, 1.5],
                            [10.1, 9.6], [1.3, 10.2], [7.1, 2.0]])
         nsrc = source.shape[0]
-        scale = 1.5
-        alpha = np.pi / 8.
+        scale = 1.5  # scaling parameter
+        alpha = np.pi / 8.  # rotation angle
         mm = scale * np.array([[np.cos(alpha), -np.sin(alpha)],
                                [np.sin(alpha), np.cos(alpha)]])
-        tx = 2.0
-        ty = 1.0
+        tx, ty = 2.0, 1.0  # translation parameters
         transl = np.array([nsrc * [tx], nsrc * [ty]])
         dest = (mm.dot(source.T) + transl).T
         t_true = estimate_transform('similarity', source, dest)
@@ -160,46 +159,13 @@ class TestAlign(unittest.TestCase):
             fraction_found = float(num_sources) / float(len(allxy))
             return fraction_found
 
-        registered_img = aa.register(source=self.image,
-                                     target=self.image_ref)
-
-        # Test that image returned is not masked
+        registered_img, footp = aa.register(source=self.image,
+                                            target=self.image_ref)
         self.assertIs(type(registered_img), np.ndarray)
+        self.assertIs(type(footp), np.ndarray)
+        self.assertIs(footp.dtype, np.dtype('bool'))
         fraction = compare_image(registered_img)
         self.assertGreater(fraction, 0.85)
-
-        # Test masked arrays
-        # Make some masks...
-        mask = np.zeros(self.image.shape, dtype='bool')
-        mask[self.h // 10:self.h // 10 + 10, :] = True
-        mask_ref = np.zeros(self.image_ref.shape, dtype='bool')
-        mask_ref[:, self.w // 10:self.w // 10 + 10] = True
-        image_masked = np.ma.array(self.image, mask=mask)
-        image_ref_masked = np.ma.array(self.image_ref, mask=mask_ref)
-
-        def testalignment(source, target):
-            registered_img = aa.register(source=source, target=target)
-            self.assertIs(type(registered_img), type(source))
-            fraction = compare_image(registered_img)
-            self.assertGreater(fraction, 0.85)
-
-        # Test it works with masked image:
-        testalignment(image_masked, self.image_ref)
-
-        # Test it works with masked ref:
-        testalignment(self.image, image_ref_masked)
-
-        # Test it works with both masked image and masked ref:
-        testalignment(image_masked, image_ref_masked)
-
-        # Test it works when given a masked array with no mask set
-        testalignment(np.ma.array(self.image), self.image_ref)
-
-        # Test it works when given a reference masked array with no mask set
-        testalignment(self.image, np.ma.array(self.image_ref))
-
-        # Test if it works when both images are masked, but with no mask set
-        testalignment(np.ma.array(self.image), np.ma.array(self.image_ref))
 
     def test_find_sources(self):
         srcs = aa._find_sources(self.image_ref)
@@ -231,15 +197,6 @@ class TestAlign(unittest.TestCase):
         rtransf = tinv.params.dot(t.params.dot(rpoint))
         err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
         self.assertLess(err, 1E-2)
-
-    # Commented out because will not work in python 2.7
-    # def test_align_image_deprecated(self):
-    #    with self.assertWarns(Warning):
-    #        aa.align_image(self.image_ref, self.image)
-    #
-    #    with self.assertWarns(Warning):
-    #        aa.find_affine_transform(self.image_ref, self.image)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,7 +7,7 @@
 Astroalign documentation
 ========================
 
-**ASTROALIGN** is a simple package that will try to register (align) two stellar astronomical images,
+**ASTROALIGN** is a python module that will try to register (align) two stellar astronomical images,
 especially when there is no WCS information available.
 
 It does so by finding similar 3-point asterisms (triangles) in both images and estimating the
@@ -38,8 +38,7 @@ Guide:
 
    installation
    tutorial
-   methods
-   mask
+   api
 
 
 Indices and tables

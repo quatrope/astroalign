@@ -1,4 +1,4 @@
-<img src="docs/aa_bw.jpg" height="150" />
+<img src="docs/aa_bw.jpg" height="150" alt="Astroalign"/>
 
 ***
 
@@ -9,17 +9,17 @@
 [![Updates](https://pyup.io/repos/github/toros-astro/astroalign/shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 [![Python 3](https://pyup.io/repos/github/toros-astro/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 
-**ASTROALIGN** is a simple package that will try to align two stellar astronomical images, especially when there is no WCS information available.
+**ASTROALIGN** is a python module that will try to align two stellar astronomical images, especially when there is no WCS information available.
 
 It does so by finding similar 3-point asterisms (triangles) in both images and deducing the affine transformation between them.
 
-General registration routines try to match feature points, using corner
+Generic registration routines try to match feature points, using corner
 detection routines to make the point correspondence.
 These generally fail for stellar astronomical images, since stars have very
 little stable structure and so, in general, indistinguishable from each other.
 Asterism matching is more robust, and closer to the human way of matching stellar images.
 
-Astro align can match images of very different field of view, point-spread function, seeing and atmospheric conditions.
+Astroalign can match images of very different field of view, point-spread function, seeing and atmospheric conditions.
 
 It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
 
@@ -42,7 +42,7 @@ or from this distribution with
 ## Usage example
 
     >>> import astroalign as aa
-    >>> aligned_image = aa.register(source_image, target_image)
+    >>> aligned_image, footprint = aa.register(source_image, target_image)
 
 In this example `source_image` will be interpolated by a transformation to coincide pixel to pixel with `target_image` and stored in `aligned_image`.
 

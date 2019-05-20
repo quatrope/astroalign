@@ -1,7 +1,7 @@
-.. _methods:
+.. _api:
 
-Module Methods
-==============
+Module API
+==========
 
 .. toctree::
    :maxdepth: 2
