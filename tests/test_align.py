@@ -167,6 +167,14 @@ class TestAlign(unittest.TestCase):
         fraction = compare_image(registered_img)
         self.assertGreater(fraction, 0.85)
 
+    def test_fill_value(self):
+        registered_img, footp = aa.register(source=self.image,
+                                            target=self.image_ref,
+                                            fill_value=-9999.99,
+                                            )
+        self.assertTrue(all(registered_img[footp] == -9999.99))
+        self.assertTrue(all(registered_img[~footp] != -9999.99))
+
     def test_find_sources(self):
         srcs = aa._find_sources(self.image_ref)
 

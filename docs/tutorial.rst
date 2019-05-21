@@ -26,6 +26,20 @@ The usage for this simple most common case would be as follows::
 .. warning::
     Flux may not be conserved after the transformation.
 
+Mask Fill Value
+---------------
+
+If you need to mask the aligned image with a special value over the region where transformation had no pixel information,
+you can use the `footprint` mask to do so::
+
+    >>> registered_image, footprint = aa.register(source, target)
+    >>> registered_image[footprint] = -99999.99
+
+Or you can pass the value to the `fill_value` argument::
+
+    >>> registered_image, footprint = aa.register(source, target, fill_value=-99999.99)
+
+Both will yield the same result.
 
 Finding the transformation
 --------------------------

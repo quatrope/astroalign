@@ -248,7 +248,7 @@ def find_transform(source, target):
     return best_t, (source_controlp[s], target_controlp[d])
 
 
-def apply_transform(transform, source, target):
+def apply_transform(transform, source, target, fill_value=None):
     """Applies the transformation ``transform`` to ``source``.
 
     The output image will have the same shape as ``target``.
@@ -259,11 +259,14 @@ def apply_transform(transform, source, target):
             transformed.
         target (numpy array): A 2D numpy array of the target image. Only used
             to set the output image shape.
+        fill_value (float): A value to fill in the areas of aligned_image
+            where footprint == True.
 
     Return:
-        A numpy 2D array of the transformed source. If source is a masked array
-        the returned image will also be a masked array with outside pixels set
-        to True.
+        A tuple (aligned_image, footprint).
+        aligned_image is a numpy 2D array of the transformed source
+        footprint is a mask 2D array with True on the regions
+        with no pixel information.
     """
     from skimage.transform import warp
     aligned_image = warp(source, inverse_map=transform.inverse,
@@ -275,11 +278,12 @@ def apply_transform(transform, source, target):
                                       output_shape=target.shape,
                                       cval=1.0)
     footprint = footprint > 0.4
-
+    if fill_value is not None:
+        aligned_image[footprint] = fill_value
     return aligned_image, footprint
 
 
-def register(source, target):
+def register(source, target, fill_value=None):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
     Args:
@@ -287,14 +291,19 @@ def register(source, target):
             transformed.
         target (numpy array): A 2D numpy array of the target image. Only used
             to set the output image shape.
+        fill_value (float): A value to fill in the areas of aligned_image
+            where footprint == True.
 
     Return:
-        A numpy 2D array of the transformed source. If source is a masked array
-        the returned image will also be a masked array with outside pixels set
-        to True.
+        A tuple (aligned_image, footprint).
+        aligned_image is a numpy 2D array of the transformed source
+        footprint is a mask 2D array with True on the regions
+        with no pixel information.
+
+
     """
     t, __ = find_transform(source=source, target=target)
-    aligned_image, footprint = apply_transform(t, source, target)
+    aligned_image, footprint = apply_transform(t, source, target, fill_value)
     return aligned_image, footprint
 
 
