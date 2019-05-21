@@ -14,6 +14,10 @@ In this particular use case, astroalign can be of great help to automatize the p
 
 After we load our images into numpy arrays, we simple choose one to be the source image to be transformed and the other to be the target.
 
+.. note::
+   astroalign will also accept as input, data objects with `data` and `mask` properties, like NDData, CCDData and Numpy masked arrays.
+   For more information, see :ref:`dataobjs`
+
 The usage for this simple most common case would be as follows::
 
     >>> import astroalign as aa
@@ -108,6 +112,54 @@ Following the example in the previous section::
 
 ``dst_calc`` should be a 5 by 2 array similar to the ``dst`` array.
 
+
+.. _dataobjs:
+
+Dealing with Data Objects with data and mask properties (NDData, CCDData, Numpy masked arrays)
+----------------------------------------------------------------------------------------------
+
+If your input data comes in the form of `ccdproc <https://ccdproc.readthedocs.io>`_'s
+`CCDData <http://docs.astropy.org/en/stable/api/astropy.nddata.CCDData.html>`_
+or `astropy <https://www.astropy.org>`_'s
+`NDData <https://docs.astropy.org/en/stable/api/astropy.nddata.NDData.html>`_
+or a `numpy <http://www.numpy.org>`_
+`masked array <https://www.numpy.org/devdocs/reference/maskedarray.generic.html>`_,
+there are a few ways to interact with astroalign.
+
+In general, for objects with `data` and `mask` properties, it is convenient to transform their masks
+along with the data and to add the footprint onto the mask.
+
+Astroalign provides this functionality with the `propagate_mask` argument to `register` and `apply_transform`.
+
+For example::
+
+    >>> from astropy.nddata import NDData
+    >>> nd = NDData([[0, 1], [2, 3]], [[True, False], [False, False]])
+
+and we want to apply a clockwise 90 degree rotation::
+
+    >>> import numpy as np
+    >>> from skimage.transform import SimilarityTransform
+    >>> transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
+
+Then we can call astroalign as usual, but with the `propagate_mask` set to True::
+
+    >>> aligned_image, footprint = aa.apply_transform(transf, nd, nd, propagate_mask=True)
+
+This will transform `nd.data` and `nd.mask` simultaneously and add the `footprint` mask from the transformation onto `nd.mask`::
+
+    >>> aligned_image
+    array([[2., 0.],
+       [3., 1.]])
+    >>> footprint
+    array([[False,  True],
+       [False, False]])
+
+Creating a new object of the same input type is now easier::
+
+    >>> new_nd = NDData(aligned_image, mask=footprint)
+
+The same will apply for CCDData objects and Numpy masked arrays.
 
 Dealing with hot pixels
 -----------------------

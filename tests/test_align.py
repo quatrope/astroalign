@@ -171,10 +171,8 @@ class TestAlign(unittest.TestCase):
         from astropy.nddata import NDData
         from skimage.transform import SimilarityTransform
         transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
-        nparr = np.array([[0., 1.], [2., 3.]])
-        mask = [[True, False], [False, False]]
 
-        nd = NDData(nparr, mask=mask)
+        nd = NDData([[0., 1.], [2., 3.]], mask=[[True, False], [False, False]])
         registered_img, footp = aa.apply_transform(
             transf, nd, nd, propagate_mask=True)
         err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
@@ -183,7 +181,7 @@ class TestAlign(unittest.TestCase):
         self.assertTrue(all(err_mask.flatten()))
 
         # Test now if there is no assigned mask during creation
-        nd = NDData(nparr)
+        nd = NDData([[0., 1.], [2., 3.]])
         registered_img, footp = aa.apply_transform(
             transf, nd, nd, propagate_mask=True)
         err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
@@ -195,10 +193,9 @@ class TestAlign(unittest.TestCase):
         from ccdproc import CCDData
         from skimage.transform import SimilarityTransform
         transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
-        nparr = np.array([[0., 1.], [2., 3.]])
-        mask = [[True, False], [False, False]]
 
-        cd = CCDData(nparr, mask=mask, unit='adu')
+        cd = CCDData([[0., 1.], [2., 3.]],
+            mask=[[True, False], [False, False]], unit='adu')
         registered_img, footp = aa.apply_transform(
             transf, cd, cd, propagate_mask=True)
         err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
@@ -206,7 +203,7 @@ class TestAlign(unittest.TestCase):
         err_mask = (footp == np.array([[False, True], [False, False]]))
         self.assertTrue(all(err_mask.flatten()))
 
-        cd = CCDData(nparr, unit='adu')
+        cd = CCDData([[0., 1.], [2., 3.]], unit='adu')
         registered_img, footp = aa.apply_transform(
             transf, cd, cd, propagate_mask=True)
         err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
