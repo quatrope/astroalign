@@ -248,7 +248,8 @@ def find_transform(source, target):
     return best_t, (source_controlp[s], target_controlp[d])
 
 
-def apply_transform(transform, source, target, fill_value=None):
+def apply_transform(transform, source, target,
+                    fill_value=None, propagate_mask=False):
     """Applies the transformation ``transform`` to ``source``.
 
     The output image will have the same shape as ``target``.
@@ -261,6 +262,8 @@ def apply_transform(transform, source, target, fill_value=None):
             to set the output image shape.
         fill_value (float): A value to fill in the areas of aligned_image
             where footprint == True.
+        propagate_mask (bool): Wether to propagate the mask in source.mask
+            onto footprint.
 
     Return:
         A tuple (aligned_image, footprint).
@@ -269,21 +272,41 @@ def apply_transform(transform, source, target, fill_value=None):
         with no pixel information.
     """
     from skimage.transform import warp
-    aligned_image = warp(source, inverse_map=transform.inverse,
-                         output_shape=target.shape, order=3, mode='constant',
-                         cval=_np.median(source), clip=False,
+    if hasattr(source, 'data') and isinstance(source.data, _np.ndarray):
+        source_data = source.data
+    else:
+        source_data = source
+    if hasattr(target, 'data') and isinstance(target.data, _np.ndarray):
+        target_data = target.data
+    else:
+        target_data = target
+
+    aligned_image = warp(source_data, inverse_map=transform.inverse,
+                         output_shape=target_data.shape, order=3, mode='constant',
+                         cval=_np.median(source_data), clip=False,
                          preserve_range=True)
-    footprint = warp(_np.zeros(source.shape, dtype='float32'),
+    footprint = warp(_np.zeros(source_data.shape, dtype='float32'),
                                       inverse_map=transform.inverse,
-                                      output_shape=target.shape,
+                                      output_shape=target_data.shape,
                                       cval=1.0)
     footprint = footprint > 0.4
+
+    if hasattr(source, 'mask') and propagate_mask:
+        source_mask = _np.array(source.mask)
+        if source_mask.shape == source_data.shape:
+            source_mask_rot = warp(source_mask.astype('float32'),
+                                      inverse_map=transform.inverse,
+                                      output_shape=target_data.shape,
+                                      cval=1.0)
+            source_mask_rot = source_mask_rot > 0.4
+            footprint = footprint | source_mask_rot
     if fill_value is not None:
         aligned_image[footprint] = fill_value
+
     return aligned_image, footprint
 
 
-def register(source, target, fill_value=None):
+def register(source, target, fill_value=None, propagate_mask=False):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
     Args:
@@ -293,6 +316,8 @@ def register(source, target, fill_value=None):
             to set the output image shape.
         fill_value (float): A value to fill in the areas of aligned_image
             where footprint == True.
+        propagate_mask (bool): Wether to propagate the mask in source.mask
+            onto footprint.
 
     Return:
         A tuple (aligned_image, footprint).
@@ -303,7 +328,9 @@ def register(source, target, fill_value=None):
 
     """
     t, __ = find_transform(source=source, target=target)
-    aligned_image, footprint = apply_transform(t, source, target, fill_value)
+    aligned_image, footprint = apply_transform(t, source, target,
+                                               fill_value, propagate_mask,
+                                               )
     return aligned_image, footprint
 
 

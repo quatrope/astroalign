@@ -167,6 +167,76 @@ class TestAlign(unittest.TestCase):
         fraction = compare_image(registered_img)
         self.assertGreater(fraction, 0.85)
 
+    def test_register_nddata(self):
+        from astropy.nddata import NDData
+        from skimage.transform import SimilarityTransform
+        transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
+        nparr = np.array([[0., 1.], [2., 3.]])
+        mask = [[True, False], [False, False]]
+
+        nd = NDData(nparr, mask=mask)
+        registered_img, footp = aa.apply_transform(
+            transf, nd, nd, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, True], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+        # Test now if there is no assigned mask during creation
+        nd = NDData(nparr)
+        registered_img, footp = aa.apply_transform(
+            transf, nd, nd, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, False], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+    def test_register_ccddata(self):
+        from ccdproc import CCDData
+        from skimage.transform import SimilarityTransform
+        transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
+        nparr = np.array([[0., 1.], [2., 3.]])
+        mask = [[True, False], [False, False]]
+
+        cd = CCDData(nparr, mask=mask, unit='adu')
+        registered_img, footp = aa.apply_transform(
+            transf, cd, cd, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, True], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+        cd = CCDData(nparr, unit='adu')
+        registered_img, footp = aa.apply_transform(
+            transf, cd, cd, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, False], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+    def test_register_npma(self):
+        from skimage.transform import SimilarityTransform
+        transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
+        nparr = np.array([[0., 1.], [2., 3.]])
+        mask = [[True, False], [False, False]]
+
+        ma = np.ma.array(nparr, mask=mask)
+        registered_img, footp = aa.apply_transform(
+            transf, ma, ma, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, True], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+        ma = np.ma.array(nparr)
+        registered_img, footp = aa.apply_transform(
+            transf, ma, ma, propagate_mask=True)
+        err = np.linalg.norm(registered_img - np.array([[2., 0.], [3., 1.]]))
+        self.assertLess(err, 1E-6)
+        err_mask = (footp == np.array([[False, False], [False, False]]))
+        self.assertTrue(all(err_mask.flatten()))
+
+
     def test_fill_value(self):
         registered_img, footp = aa.register(source=self.image,
                                             target=self.image_ref,

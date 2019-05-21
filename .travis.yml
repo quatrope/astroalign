@@ -6,6 +6,8 @@ python:
 
 install:
   - pip install -r requirements.txt
+  - pip install astropy
+  - pip install ccdproc
   - pip install codecov
 
 script:
