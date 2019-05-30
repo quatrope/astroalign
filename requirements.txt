@@ -1,5 +1,0 @@
-numpy>=1.6.2
-scipy>=0.15
-scikit-image>=0.13
-sep>=1.0
-
