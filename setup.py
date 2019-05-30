@@ -9,8 +9,8 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,14 +30,14 @@ import os
 from ez_setup import use_setuptools
 use_setuptools()
 
-from setuptools import setup
+from setuptools import setup  # noqa
 
 
 # =============================================================================
 # PATH OF THIS MODULE
 # =============================================================================
 
-PATH = os.path.absdir(os.path.dirname(__file__))
+PATH = os.path.abspath(os.path.dirname(__file__))
 
 
 # =============================================================================
@@ -88,7 +88,7 @@ def run():
         author='Martin Beroiz',
         author_email='martinberoiz@gmail.com',
         url='https://github.com/toros-astro/astroalign',
-        py_modules=['astroalign', ],
+        py_modules=['astroalign', 'ez_setup'],
         install_requires=REQUIREMENTS,
         test_suite='tests')
 

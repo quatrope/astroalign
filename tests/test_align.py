@@ -1,3 +1,25 @@
+# MIT License
+
+# Copyright (c) 2016-2019 Martin Beroiz
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import unittest
 import numpy as np
 import astroalign as aa
@@ -194,7 +216,8 @@ class TestAlign(unittest.TestCase):
         from skimage.transform import SimilarityTransform
         transf = SimilarityTransform(rotation=np.pi/2., translation=(1, 0))
 
-        cd = CCDData([[0., 1.], [2., 3.]],
+        cd = CCDData(
+            [[0., 1.], [2., 3.]],
             mask=[[True, False], [False, False]], unit='adu')
         registered_img, footp = aa.apply_transform(
             transf, cd, cd, propagate_mask=True)
@@ -232,7 +255,6 @@ class TestAlign(unittest.TestCase):
         self.assertLess(err, 1E-6)
         err_mask = (footp == np.array([[False, False], [False, False]]))
         self.assertTrue(all(err_mask.flatten()))
-
 
     def test_fill_value(self):
         registered_img, footp = aa.register(source=self.image,
@@ -272,6 +294,7 @@ class TestAlign(unittest.TestCase):
         rtransf = tinv.params.dot(t.params.dot(rpoint))
         err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
         self.assertLess(err, 1E-2)
+
 
 if __name__ == "__main__":
     unittest.main()
