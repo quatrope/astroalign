@@ -34,7 +34,7 @@ from setuptools import setup  # noqa
 
 
 # =============================================================================
-# PATH OF THIS MODULE
+# PATH TO THIS MODULE
 # =============================================================================
 
 PATH = os.path.abspath(os.path.dirname(__file__))
