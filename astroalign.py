@@ -42,9 +42,23 @@ functions, seeing and atmospheric conditions.
 (c) Martin Beroiz
 """
 
-import numpy as _np
 
 __version__ = '2.0rc1'
+
+__all__ = [
+    "MAX_CONTROL_POINTS",
+    "MIN_MATCHES_FRACTION",
+    "MaxIterError",
+    "NUM_NEAREST_NEIGHBORS",
+    "PIXEL_TOL",
+    "apply_transform",
+    "estimate_transform",
+    "find_transform",
+    "matrix_transform",
+    "register"]
+
+
+import numpy as _np
 
 from skimage.transform import estimate_transform
 from skimage.transform import matrix_transform # noqa
@@ -452,6 +466,8 @@ Return:
             break
         iterations += 1
     if bestfit is None:
-        raise MaxIterError("Max iterations exceeded while trying to find acceptable transformation.")
+        raise MaxIterError(
+            "Max iterations exceeded while trying to find "
+            "acceptable transformation.")
 
     return bestfit, best_inlier_idxs
