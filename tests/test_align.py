@@ -774,5 +774,13 @@ class TestColorImages(unittest.TestCase):
         self.assertTrue(footp.shape == (self.h, self.w))
 
 
+class TestWCS(unittest.TestCase):
+    def setUp(self):
+        ...
+
+    def test_estimate_wcs(self):
+        aa.estimate_wcs(None, None)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -55,8 +55,8 @@ __all__ = [
     "find_transform",
     "matrix_transform",
     "register",
+    "estimate_wcs",
 ]
-
 
 import numpy as _np
 from skimage.transform import estimate_transform
@@ -195,6 +195,25 @@ class _MatchTransform:
         )
         error = resid.max(axis=1)
         return error
+
+
+def estimate_wcs(source, pointing, fov):
+    """Given an approximate pointing and field of view (fov) of a source,
+    estimate WCS of the field by querying nearby stars and matching with source.
+
+    Return WCS object.
+
+    Args:
+        source (array-like): Either a numpy array of the source image or an
+        iterable of (x, y) coordinates of the source positions.
+        pointing: A (RA, Dec) tuple of the approximate center pointing of the
+        field.
+        fov: An approximate field of view. Astropy units or decimal degrees.
+
+    Returns:
+        An Astropy WCS object of the field.
+    """
+    raise NotImplementedError
 
 
 def _data(image):
