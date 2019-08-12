@@ -55,8 +55,8 @@ __all__ = [
     "find_transform",
     "matrix_transform",
     "register",
+    "estimate_wcs",
 ]
-
 
 import numpy as _np
 from skimage.transform import estimate_transform
