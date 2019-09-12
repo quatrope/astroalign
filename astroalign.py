@@ -137,8 +137,10 @@ arranged as described in _arrangetriplet.
     inv = []
     triang_vrtx = []
     coordtree = KDTree(sources)
+    # The number of nearest neighbors to request (to work with few sources)
+    knn = min(len(sources), NUM_NEAREST_NEIGHBORS)
     for asrc in sources:
-        __, indx = coordtree.query(asrc, NUM_NEAREST_NEIGHBORS)
+        __, indx = coordtree.query(asrc, knn)
 
         # Generate all possible triangles with the 5 indx provided, and store
         # them with the order (a, b, c) defined in _arrangetriplet
@@ -249,13 +251,13 @@ def find_transform(source, target):
     target_invariants, target_asterisms = _generate_invariants(target_controlp)
     target_invariant_tree = KDTree(target_invariants)
 
-    # r = 0.03 is the maximum search distance, 0.03 is an empirical value that
+    # r = 0.1 is the maximum search distance, 0.1 is an empirical value that
     # returns about the same number of matches than inputs
     # matches_list is a list of lists such that for each element
     # source_invariant_tree.data[i], matches_list[i] is a list of the indices
     # of its neighbors in target_invariant_tree.data
     matches_list = \
-        source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.03)
+        source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.1)
 
     # matches unravels the previous list of matches into pairs of source and
     # target control point matches.
@@ -272,7 +274,8 @@ def find_transform(source, target):
     inv_model = _MatchTransform(source_controlp, target_controlp)
     n_invariants = len(matches)
     max_iter = n_invariants
-    min_matches = min(10, int(n_invariants * MIN_MATCHES_FRACTION))
+    # Set the minimum matches to be between 1 and 10 asterisms
+    min_matches = max(1, min(10, int(n_invariants * MIN_MATCHES_FRACTION)))
     best_t, inlier_ind = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
                                  min_matches)
     triangle_inliers = matches[inlier_ind]
