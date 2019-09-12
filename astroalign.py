@@ -276,8 +276,14 @@ def find_transform(source, target):
     max_iter = n_invariants
     # Set the minimum matches to be between 1 and 10 asterisms
     min_matches = max(1, min(10, int(n_invariants * MIN_MATCHES_FRACTION)))
-    best_t, inlier_ind = _ransac(matches, inv_model, 1, max_iter, PIXEL_TOL,
-                                 min_matches)
+    if (len(source_controlp) == 3 or len(target_controlp) == 3)\
+            and len(matches) == 1:
+        best_t = inv_model.fit(matches)
+        inlier_ind = _np.arange(len(matches))  # All of the indices
+    else:
+        best_t, inlier_ind = _ransac(
+            matches, inv_model, 1, max_iter, PIXEL_TOL, min_matches
+        )
     triangle_inliers = matches[inlier_ind]
     d1, d2, d3 = triangle_inliers.shape
     inl_arr = triangle_inliers.reshape(d1 * d2, d3)
