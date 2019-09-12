@@ -323,9 +323,20 @@ class TestFewSources(unittest.TestCase):
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
 
-    def check_if_ok(self):
-        "This is a helper function with common code for 3, 4, 5, and 6 stars"
+    def check_if_ok(self, numstars):
+        "Helper function with common test code for 3, 4, 5, and 6 stars"
         from skimage.transform import estimate_transform, matrix_transform
+
+        if numstars > 6:
+            raise NotImplementedError
+
+        # x and y of stars in the ref frame (int's)
+        self.star_refx = np.array([100, 120, 400, 400, 200, 200])[:numstars]
+        self.star_refy = np.array([150, 200, 200, 320, 210, 350])[:numstars]
+        self.num_stars = numstars
+        # Fluxes of stars
+        self.star_f = np.array(numstars * [700.0])
+
         self.image, self.image_ref, self.star_ref_pos, self.star_new_pos = simulate_image_pair(
             shape=(self.h, self.w),
             translation=(self.x_offset, self.y_offset),
@@ -354,41 +365,21 @@ class TestFewSources(unittest.TestCase):
         dst_pts_test = matrix_transform(src_pts, t.params)
         self.assertLess(np.linalg.norm(dst_pts_test - dst_pts), 1.0)
 
+    def test_find_transform_twosources(self):
+        with self.assertRaises(Exception):
+            self.check_if_ok(2)
+
     def test_find_transform_threesources(self):
-        # x and y of stars in the ref frame (int's)
-        self.star_refx = np.array([100, 120, 400])
-        self.star_refy = np.array([150, 200, 200])
-        self.num_stars = len(self.star_refx)
-        # Fluxes of stars
-        self.star_f = np.array(self.num_stars * [700.0])
-        self.check_if_ok()
+        self.check_if_ok(3)
 
     def test_find_transform_foursources(self):
-        # x and y of stars in the ref frame (int's)
-        self.star_refx = np.array([100, 120, 400, 400])
-        self.star_refy = np.array([150, 200, 200, 320])
-        self.num_stars = len(self.star_refx)
-        # Fluxes of stars
-        self.star_f = np.array(self.num_stars * [700.0])
-        self.check_if_ok()
+        self.check_if_ok(4)
 
     def test_find_transform_fivesources(self):
-        # x and y of stars in the ref frame (int's)
-        self.star_refx = np.array([100, 120, 400, 400, 200])
-        self.star_refy = np.array([150, 200, 200, 320, 210])
-        self.num_stars = len(self.star_refx)
-        # Fluxes of stars
-        self.star_f = np.array(self.num_stars * [700.0])
-        self.check_if_ok()
+        self.check_if_ok(5)
 
     def test_find_transform_sixsources(self):
-        # x and y of stars in the ref frame (int's)
-        self.star_refx = np.array([100, 120, 400, 400, 200, 200])
-        self.star_refy = np.array([150, 200, 200, 320, 210, 350])
-        self.num_stars = len(self.star_refx)
-        # Fluxes of stars
-        self.star_f = np.array(self.num_stars * [700.0])
-        self.check_if_ok()
+        self.check_if_ok(6)
 
     #def test_register(self):
     #    ...

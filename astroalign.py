@@ -462,7 +462,7 @@ Return:
         # select indices of rows with accepted points
         also_idxs = test_idxs[test_err < thresh]
         alsoinliers = data[also_idxs, :]
-        if len(alsoinliers) > min_matches:
+        if len(alsoinliers) >= min_matches:
             betterdata = _np.concatenate((maybeinliers, alsoinliers))
             bestfit = model.fit(betterdata)
             best_inlier_idxs = _np.concatenate((maybe_idxs, also_idxs))
