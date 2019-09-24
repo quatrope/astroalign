@@ -23,7 +23,7 @@ matrix:
           dist: xenial
           sudo: true
           
-        - os: ox
+        - os: osx
           python: 3.6
           env: TOXENV=py36
         
