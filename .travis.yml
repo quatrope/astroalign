@@ -1,4 +1,7 @@
 language: python
+os:
+  - linux
+  - osx
 sudo: false
 install:
   - pip install tox
