@@ -87,7 +87,7 @@ def run():
         long_description_content_type='text/markdown',
         author='Martin Beroiz',
         author_email='martinberoiz@gmail.com',
-        url='https://github.com/toros-astro/astroalign',
+        url='https://astroalign.readthedocs.io/',
         py_modules=['astroalign', 'ez_setup'],
         install_requires=REQUIREMENTS,
         test_suite='tests')
