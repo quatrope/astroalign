@@ -27,6 +27,8 @@ It may not work, or work with special care, on images of extended objects with f
 
 You can find a Jupyter notebook example with the main features at [http://toros-astro.github.io/astroalign/](http://toros-astro.github.io/astroalign/).
 
+**Full documentation:** https://astroalign.readthedocs.io/
+
 ***
 
 ## Installation
