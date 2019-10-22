@@ -30,6 +30,44 @@ You can find a Jupyter notebook example with the main features at http://toros-a
     Please refer to the tutorial for how to solve this problem using `CCDProc's cosmic-ray remover <https://ccdproc.readthedocs.io/en/latest/api/ccdproc.cosmicray_lacosmic.html>`_.
 
 
+Citation
+--------
+
+If you use astroalign in a scientific publication, we would appreciate
+citations to the following paper:
+
+    Beroiz, M., Cabral, J. B., & Sanchez, B. (2019). Astroalign: A Python
+    module for astronomical image registration.
+    arXiv preprint arXiv:1909.02946.
+
+
+Bibtex entry::
+
+    @article{beroiz2019astroalign,
+        title={Astroalign: A Python module for astronomical image registration},
+        author={Beroiz, Martin and Cabral, Juan B and Sanchez, Bruno},
+        journal={arXiv preprint arXiv:1909.02946},
+        year={2019}
+    }
+
+**Full Publication:** https://arxiv.org/abs/1909.02946
+
+
+Or cite the project itself from `ASCL <http://ascl.net/1906.001>`_:
+
+    Beroiz, M. I. (2019). Astroalign: Asterism-matching alignment of
+    astronomical images. Astrophysics Source Code Library.
+
+Bibtex::
+
+    @article{beroiz2019astroalign,
+        title={Astroalign: Asterism-matching alignment of astronomical images},
+        author={Beroiz, Martin I},
+        journal={Astrophysics Source Code Library},
+        year={2019}
+    }
+
+
 Guide:
 ^^^^^^
 
