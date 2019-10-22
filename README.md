@@ -10,7 +10,7 @@
 [![Python 3](https://pyup.io/repos/github/toros-astro/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 [![PyPI](https://img.shields.io/pypi/v/astroalign)](https://pypi.org/project/astroalign/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/astroalign)
-[![ascl:1906.001](https://img.shields.io/badge/ascl-1906.001-blue.svg?colorB=262255)](http://ascl.net/1906.00)
+[![ascl:1906.001](https://img.shields.io/badge/ascl-1906.001-blue.svg?colorB=262255)](http://ascl.net/1906.001)
 
 
 **ASTROALIGN** is a python module that will try to align two stellar astronomical images, especially when there is no WCS information available.
