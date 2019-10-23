@@ -283,6 +283,11 @@ class CLI:
                   f"default is {DEFAULT_SIZES['horizontal']} and for "
                   f"vertical {DEFAULT_SIZES['vertical']}."))
 
+        plot.add_argument(
+            "--out", "-o", dest="out",
+            help=("A file to store the generated plot. "
+                  "By default the default matplotlib backend shows the plot"))
+
     def parse_and_run(self, *args, **kwargs):
         ns = self._parser.parse_args(*args, **kwargs)
         return ns.callback(ns)
@@ -302,7 +307,15 @@ class CLI:
 
         fig.suptitle("")
         plt.tight_layout()
-        plt.show()
+        if ns.out is None:
+            print(f"Showing plot for data stored in '{ns.file.name}'...")
+            fig.canvas.set_window_title(f"{self.parser.prog} - {ns.file.name}")
+            plt.show()
+        else:
+            print(
+                f"Storing plot for data in '{ns.file.name}' -> '{ns.out}'...")
+            plt.savefig(ns.out)
+            print("DONE!")
 
     def describe_command(self, ns):
         results = pd.read_csv(ns.file)
