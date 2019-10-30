@@ -111,7 +111,7 @@ def get_parameters(sizes, stars, noises, comb_number, repeats, seed):
     return grid
 
 
-def _test(size, stars, noise, seed, n_tests):
+def _test(size, stars, noise, seed, n_tests=35):
     # get image
     image = get_image(size, stars, noise, seed)
     imagedata = np.ascontiguousarray(image[0])
@@ -180,5 +180,18 @@ def _test(size, stars, noise, seed, n_tests):
 
     return final_df
 
+def benchmark(sizes=SIZES, stars=STARS, noises=NOISES,
+              comb_number=10, seed=None, repeats=REPEATS, n_jobs=-1):
+
+    grid = get_parameters(
+        sizes=sizes, stars=stars, noises=noises,
+        comb_number=comb_number, seed=seed, repeats=repeats)
+
+    with joblib.Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(
+            joblib.delayed(_test)(**params) for params in tqdm.tqdm(grid))
+    
+    df = pd.concat(results)
+    return df
 
 
