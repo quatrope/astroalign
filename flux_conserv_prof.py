@@ -174,10 +174,11 @@ def _test(size, stars, noise, seed, n_tests=35):
                                                              nflux[good_flux])
         df['stats_slope'] = slp
         df['stats_intpt'] = intpt
+        df['flux_per_area_ratio'] = df['flux_ratio']/(df['trf_scale']**2)
         dframes.append(df)
     
     final_df = pd.concat(dframes)
-
+ 
     return final_df
 
 def benchmark(sizes=SIZES, stars=STARS, noises=NOISES,
