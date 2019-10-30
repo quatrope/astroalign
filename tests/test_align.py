@@ -132,6 +132,64 @@ def simulate_image_pair(
     return image, image_ref, star_ref_pos, star_new_pos
 
 
+def simulate_image_single(
+    shape=(512, 512),
+    kshape=(10, 10),
+    noise_level=500,
+    gshape=(21, 21),
+    gsigma=1.5,
+    num_stars=1500,
+    star_refx=None,
+    star_refy=None,
+    star_flux=None,
+):
+    from scipy import signal
+
+    h, w = shape  # image height and width
+    kh, kw = kshape  # kernel height and width
+    psf = gauss(shape=gshape, sx=gsigma, sy=gsigma)
+
+    big_r = 0.5 * np.sqrt(h ** 2 + w ** 2)
+
+    # Sky background
+    image = np.random.poisson(
+        noise_level, size=(h + kh, w + kw)
+        ).astype("float64")
+
+    # x and y of stars in the ref frame (int's)
+    if star_refx is None:
+        star_refx = np.random.randint(
+            low=int(-big_r) + w / 2, high=int(big_r) + w / 2, size=(num_stars,)
+        )
+    if star_refy is None:
+        star_refy = np.random.randint(
+            low=int(-big_r) + h / 2, high=int(big_r) + h / 2, size=(num_stars,)
+        )
+    # Fluxes of stars
+    if star_flux is None:
+        a, m = 0.8, 3.0 * image.std()  # This are Pareto dist coeff's
+        star_flux = (1.0 + np.random.pareto(a, num_stars)) * m
+
+    # inframe will contain the stars in the reference image
+    inframe = []
+    ymax, xmax = image.shape
+    for x, y, f in zip(star_refx, star_refy, star_flux):
+        if x > 0 and x < xmax and y > 0 and y < ymax:
+            inframe.append((int(x), int(y), f))
+    cols, rows, flux = np.array(inframe).astype(int).T
+
+    image[rows, cols] += flux
+    image = signal.convolve2d(image, psf, mode="same")
+    image = image[kh // 2: -kh // 2, kw // 2: -kw // 2]
+    # Adjust here the positions of rows and cols after cropping image
+    cols -= kw // 2
+    rows -= kh // 2
+
+    star_pos = np.array(list(zip(cols, rows)))
+
+    return image, star_pos
+
+
 class TestAlign(unittest.TestCase):
     def setUp(self):
         self.h = 512  # image height

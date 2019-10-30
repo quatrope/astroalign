@@ -56,6 +56,9 @@ docs/_build/
 # PyBuilder
 target/
 
+# Visual studio code workspace
+*.workspace
+
 # astroalign
 .ipynb_checkpoints*
 .pytest_cache
