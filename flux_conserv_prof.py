@@ -195,4 +195,14 @@ def benchmark(sizes=SIZES, stars=STARS, noises=NOISES,
     df = pd.concat(results)
     return df
 
-
+#tab=_test(SIZES[0], STARS[0], NOISES[0], 42)
+#bins = np.arange(0.95, 1.05, 0.001)
+#plt.hist(tab.flux_per_area_ratio, normed=True, histtype='step', 
+#         bins=bins, label='Data') 
+#plt.plot(bins+(bins[1]-bins[0])/2., 
+#         stats.norm.pdf(bins, loc=np.mean(tab.flux_per_area_ratio), 
+#         scale=np.std(tab.flux_per_area_ratio)),label='Gaussian')
+#plt.legend(loc='best')
+#plt.xlabel('Flux ratio per unit area')
+#plt.ylabel('Normalized N')
+#plt.save('Figure_flux_ratio.png')
