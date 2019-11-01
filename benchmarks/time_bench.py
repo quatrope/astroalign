@@ -95,7 +95,7 @@ def get_parameters(sizes, stars, noises, comb_number, repeats, seed):
         "size": sizes, "stars": stars, "noise": noises})
     grid = list(grid) * comb_number
 
-    # set the random state for run in paralell
+    # set the random state for run in parallel
     random = np.random.RandomState(seed)
     images_seeds = random.randint(1_000_000, size=len(grid))
 
