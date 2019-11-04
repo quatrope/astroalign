@@ -40,8 +40,8 @@ from skimage.transform import SimilarityTransform
 
 from scipy import stats
 
-sys.path.insert(0, '..')
-from tests.test_align import simulate_image_single
+sys.path.insert(0, '..')  # noqa
+from tests.test_align import simulate_image_single  # noqa
 
 
 # =============================================================================
