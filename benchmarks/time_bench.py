@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2016-2019 Martin Beroiz, Juan B. Cabral
+# Copyright (c) 2016-2019 Martin Beroiz, Juan B. Cabral, Bruno Sanchez
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -182,8 +182,9 @@ class CLI:
 
     def __init__(self):
         self._parser = argparse.ArgumentParser(
-                description="Astroalign profile tool based on timeit")
-        self._parser.set_defaults(callback=lambda ns: self.print_usage())
+                description="Astroalign time benchmark tool based on timeit")
+        self._parser.set_defaults(
+            callback=lambda ns: self.parser.print_usage())
 
         self._parser.add_argument(
             '--version', action='version', version='%(prog)s 2019.10')
@@ -207,7 +208,7 @@ class CLI:
         benchmark.add_argument(
             "--stars", dest="stars", type=int, default=STARS, nargs="+",
             help=("The total numbers of stars in the image "
-                f"(defaults={STARS})."))
+                  f"(defaults={STARS})."))
 
         benchmark.add_argument(
             "--noises", dest="noises", type=int, default=NOISES, nargs="+",
@@ -216,7 +217,7 @@ class CLI:
         benchmark.add_argument(
             "--number", dest="comb_number", type=int, default=10,
             help=("How many random images pairs must be created for one "
-                "combination of sizes, stars and noise (default=10)."))
+                  "combination of sizes, stars and noise (default=10)."))
 
         benchmark.add_argument(
             "--seed", dest="seed", type=int, default=None,
@@ -248,14 +249,13 @@ class CLI:
 
         describe = subparsers.add_parser(
             "describe",
-            help=("Show a resume and (optionally) a plot of the distributions "
-                  "of the benchmark results"))
+            help="Show a resume and (optionally) of the benchmark results")
         describe.set_defaults(callback=self.describe_command)
 
         describe.add_argument(
             "--file", "-f", dest="file", required=True,
             type=argparse.FileType('r'),
-            help="File path of the benchmark data in CSV format")
+            help="File path of the time benchmark data in CSV format")
 
         # =====================================================================
         # plot subparser
@@ -268,7 +268,7 @@ class CLI:
         plot.add_argument(
             "--file", "-f", dest="file", required=True,
             type=argparse.FileType('r'),
-            help="File path of the benchmark data in CSV format")
+            help="File path of the time benchmark data in CSV format")
 
         plot.add_argument(
             "--orientation", dest="orientation",
