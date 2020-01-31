@@ -67,7 +67,7 @@ author = u'Martin Beroiz'
 with open(os.path.join('..', 'astroalign.py'), 'r') as f:
     for line in f:
         if line.startswith('__version__'):
-            _, _, __version__ = line.replace("'", '').split()
+            _, _, __version__ = line.replace('"', "").split()
             break
 
 # The short X.Y version.

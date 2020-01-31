@@ -43,7 +43,7 @@ functions, seeing and atmospheric conditions.
 """
 
 
-__version__ = '2.0.1'
+__version__ = "2.0.1"
 
 __all__ = [
     "MAX_CONTROL_POINTS",
@@ -55,13 +55,14 @@ __all__ = [
     "estimate_transform",
     "find_transform",
     "matrix_transform",
-    "register"]
+    "register",
+]
 
 
 import numpy as _np
 
 from skimage.transform import estimate_transform
-from skimage.transform import matrix_transform # noqa
+from skimage.transform import matrix_transform  # noqa
 
 
 MAX_CONTROL_POINTS = 50
@@ -93,8 +94,13 @@ Default: 5
 
 def _invariantfeatures(x1, x2, x3):
     "Given 3 points x1, x2, x3, return the invariant features for the set."
-    sides = _np.sort([_np.linalg.norm(x1 - x2), _np.linalg.norm(x2 - x3),
-                     _np.linalg.norm(x1 - x3)])
+    sides = _np.sort(
+        [
+            _np.linalg.norm(x1 - x2),
+            _np.linalg.norm(x2 - x3),
+            _np.linalg.norm(x1 - x3),
+        ]
+    )
     return [sides[2] / sides[1], sides[1] / sides[0]]
 
 
@@ -114,6 +120,7 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
     # the most common vertex in the list of vertices for two sides is the
     # point at which they meet.
     from collections import Counter
+
     count = Counter(side_ind[[l1_ind, l2_ind]].flatten())
     a = count.most_common(1)[0][0]
     count = Counter(side_ind[[l2_ind, l3_ind]].flatten())
@@ -132,6 +139,7 @@ arranged as described in _arrangetriplet.
     from scipy.spatial import KDTree
     from itertools import combinations
     from functools import partial
+
     arrange = partial(_arrangetriplet, sources=sources)
 
     inv = []
@@ -144,16 +152,22 @@ arranged as described in _arrangetriplet.
 
         # Generate all possible triangles with the 5 indx provided, and store
         # them with the order (a, b, c) defined in _arrangetriplet
-        all_asterism_triang = [arrange(vertex_indices=list(cmb))
-                               for cmb in combinations(indx, 3)]
+        all_asterism_triang = [
+            arrange(vertex_indices=list(cmb)) for cmb in combinations(indx, 3)
+        ]
         triang_vrtx.extend(all_asterism_triang)
 
-        inv.extend([_invariantfeatures(*sources[triplet])
-                    for triplet in all_asterism_triang])
+        inv.extend(
+            [
+                _invariantfeatures(*sources[triplet])
+                for triplet in all_asterism_triang
+            ]
+        )
 
     # Remove here all possible duplicate triangles
-    uniq_ind = [pos for (pos, elem) in enumerate(inv)
-                if elem not in inv[pos + 1:]]
+    uniq_ind = [
+        pos for (pos, elem) in enumerate(inv) if elem not in inv[pos + 1 :]
+    ]
     inv_uniq = _np.array(inv)[uniq_ind]
     triang_vrtx_uniq = _np.array(triang_vrtx)[uniq_ind]
 
@@ -176,15 +190,17 @@ class _MatchTransform:
         """
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
-        approx_t = estimate_transform('similarity',
-                                      self.source[s], self.target[d])
+        approx_t = estimate_transform(
+            "similarity", self.source[s], self.target[d]
+        )
         return approx_t
 
     def get_error(self, data, approx_t):
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
-        resid = approx_t.residuals(self.source[s], self.target[d])\
-            .reshape(d1, d2)
+        resid = approx_t.residuals(self.source[s], self.target[d]).reshape(
+            d1, d2
+        )
         error = resid.max(axis=1)
         return error
 
@@ -225,7 +241,7 @@ def find_transform(source, target):
             # Assume it's a 2D image
             source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
     except:
-        raise TypeError('Input type for source not supported.')
+        raise TypeError("Input type for source not supported.")
 
     try:
         if len(target[0]) == 2:
@@ -235,15 +251,19 @@ def find_transform(source, target):
             # Assume it's a 2D image
             target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
     except:
-        raise TypeError('Input type for target not supported.')
+        raise TypeError("Input type for target not supported.")
 
     # Check for low number of reference points
     if len(source_controlp) < 3:
-        raise Exception("Reference stars in source image are less than the "
-                        "minimum value (3).")
+        raise Exception(
+            "Reference stars in source image are less than the "
+            "minimum value (3)."
+        )
     if len(target_controlp) < 3:
-        raise Exception("Reference stars in target image are less than the "
-                        "minimum value (3).")
+        raise Exception(
+            "Reference stars in target image are less than the "
+            "minimum value (3)."
+        )
 
     source_invariants, source_asterisms = _generate_invariants(source_controlp)
     source_invariant_tree = KDTree(source_invariants)
@@ -256,8 +276,9 @@ def find_transform(source, target):
     # matches_list is a list of lists such that for each element
     # source_invariant_tree.data[i], matches_list[i] is a list of the indices
     # of its neighbors in target_invariant_tree.data
-    matches_list = \
-        source_invariant_tree.query_ball_tree(target_invariant_tree, r=0.1)
+    matches_list = source_invariant_tree.query_ball_tree(
+        target_invariant_tree, r=0.1
+    )
 
     # matches unravels the previous list of matches into pairs of source and
     # target control point matches.
@@ -276,8 +297,9 @@ def find_transform(source, target):
     max_iter = n_invariants
     # Set the minimum matches to be between 1 and 10 asterisms
     min_matches = max(1, min(10, int(n_invariants * MIN_MATCHES_FRACTION)))
-    if (len(source_controlp) == 3 or len(target_controlp) == 3)\
-            and len(matches) == 1:
+    if (len(source_controlp) == 3 or len(target_controlp) == 3) and len(
+        matches
+    ) == 1:
         best_t = inv_model.fit(matches)
         inlier_ind = _np.arange(len(matches))  # All of the indices
     else:
@@ -288,14 +310,31 @@ def find_transform(source, target):
     d1, d2, d3 = triangle_inliers.shape
     inl_arr = triangle_inliers.reshape(d1 * d2, d3)
     inl_unique = set(tuple(pair) for pair in inl_arr)
-    inl_arr_unique = _np.array(list(list(apair) for apair in inl_unique))
+    # In the next, multiple assignements to the same source point s are removed
+    # We keep the pair (s, t) with the lowest reprojection error.
+    inl_dict = {}
+    for s_i, t_i in inl_unique:
+        # calculate error
+        s_vertex = source_controlp[s_i]
+        t_vertex = target_controlp[t_i]
+        s_vertex_expanded = _np.append(s_vertex, [1]).reshape(3, 1)
+        s_vertex_pred = best_t.params.dot(s_vertex_expanded)[:2].reshape(-1)
+        error = _np.linalg.norm(s_vertex_pred - t_vertex)
+
+        # if s_i not in dict, or if its error is smaller than previous error
+        if s_i not in inl_dict or (error < inl_dict[s_i][1]):
+            inl_dict[s_i] = (t_i, error)
+    inl_arr_unique = _np.array(
+        [[s_i, t_i] for s_i, (t_i, e) in inl_dict.items()]
+    )
     s, d = inl_arr_unique.T
 
     return best_t, (source_controlp[s], target_controlp[d])
 
 
-def apply_transform(transform, source, target,
-                    fill_value=None, propagate_mask=False):
+def apply_transform(
+    transform, source, target, fill_value=None, propagate_mask=False
+):
     """Applies the transformation ``transform`` to ``source``.
 
     The output image will have the same shape as ``target``.
@@ -318,32 +357,43 @@ def apply_transform(transform, source, target,
         with no pixel information.
     """
     from skimage.transform import warp
-    if hasattr(source, 'data') and isinstance(source.data, _np.ndarray):
+
+    if hasattr(source, "data") and isinstance(source.data, _np.ndarray):
         source_data = source.data
     else:
         source_data = source
-    if hasattr(target, 'data') and isinstance(target.data, _np.ndarray):
+    if hasattr(target, "data") and isinstance(target.data, _np.ndarray):
         target_data = target.data
     else:
         target_data = target
 
-    aligned_image = warp(source_data, inverse_map=transform.inverse,
-                         output_shape=target_data.shape, order=3, mode='constant',
-                         cval=_np.median(source_data), clip=False,
-                         preserve_range=True)
-    footprint = warp(_np.zeros(source_data.shape, dtype='float32'),
-                                      inverse_map=transform.inverse,
-                                      output_shape=target_data.shape,
-                                      cval=1.0)
+    aligned_image = warp(
+        source_data,
+        inverse_map=transform.inverse,
+        output_shape=target_data.shape,
+        order=3,
+        mode="constant",
+        cval=_np.median(source_data),
+        clip=False,
+        preserve_range=True,
+    )
+    footprint = warp(
+        _np.zeros(source_data.shape, dtype="float32"),
+        inverse_map=transform.inverse,
+        output_shape=target_data.shape,
+        cval=1.0,
+    )
     footprint = footprint > 0.4
 
-    if hasattr(source, 'mask') and propagate_mask:
+    if hasattr(source, "mask") and propagate_mask:
         source_mask = _np.array(source.mask)
         if source_mask.shape == source_data.shape:
-            source_mask_rot = warp(source_mask.astype('float32'),
-                                      inverse_map=transform.inverse,
-                                      output_shape=target_data.shape,
-                                      cval=1.0)
+            source_mask_rot = warp(
+                source_mask.astype("float32"),
+                inverse_map=transform.inverse,
+                output_shape=target_data.shape,
+                cval=1.0,
+            )
             source_mask_rot = source_mask_rot > 0.4
             footprint = footprint | source_mask_rot
     if fill_value is not None:
@@ -374,9 +424,9 @@ def register(source, target, fill_value=None, propagate_mask=False):
 
     """
     t, __ = find_transform(source=source, target=target)
-    aligned_image, footprint = apply_transform(t, source, target,
-                                               fill_value, propagate_mask,
-                                               )
+    aligned_image, footprint = apply_transform(
+        t, source, target, fill_value, propagate_mask
+    )
     return aligned_image, footprint
 
 
@@ -384,15 +434,16 @@ def _find_sources(img):
     "Return sources (x, y) sorted by brightness."
 
     import sep
+
     if isinstance(img, _np.ma.MaskedArray):
-        image = img.filled(fill_value=_np.median(img)).astype('float32')
+        image = img.filled(fill_value=_np.median(img)).astype("float32")
     else:
-        image = img.astype('float32')
+        image = img.astype("float32")
     bkg = sep.Background(image)
-    thresh = 3. * bkg.globalrms
+    thresh = 3.0 * bkg.globalrms
     sources = sep.extract(image - bkg.back(), thresh)
-    sources.sort(order='flux')
-    return _np.array([[asrc['x'], asrc['y']] for asrc in sources[::-1]])
+    sources.sort(order="flux")
+    return _np.array([[asrc["x"], asrc["y"]] for asrc in sources[::-1]])
 
 
 # Copyright (c) 2004-2007, Andrew D. Straw. All rights reserved.
@@ -428,8 +479,10 @@ def _find_sources(img):
 #
 # Modified by Martin Beroiz
 
+
 class MaxIterError(Exception):
     pass
+
 
 def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
     """fit model parameters to data using the RANSAC algorithm
@@ -477,6 +530,7 @@ Return:
     if bestfit is None:
         raise MaxIterError(
             "Max iterations exceeded while trying to find "
-            "acceptable transformation.")
+            "acceptable transformation."
+        )
 
     return bestfit, best_inlier_idxs

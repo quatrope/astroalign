@@ -62,12 +62,12 @@ def simulate_image_pair(
 
     big_r = 0.5 * np.sqrt(h ** 2 + w ** 2) + max(abs(x_offset), abs(y_offset))
 
-    image_ref = np.random.poisson(
-        noise_level, size=(h + kh, w + kw)
-        ).astype("float64")
-    image = np.random.poisson(
-        noise_level, size=(h + kh, w + kw)
-        ).astype("float64")
+    image_ref = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+        "float64"
+    )
+    image = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+        "float64"
+    )
 
     # x and y of stars in the ref frame (int's)
     if star_refx is None:
@@ -152,9 +152,9 @@ def simulate_image_single(
     big_r = 0.5 * np.sqrt(h ** 2 + w ** 2)
 
     # Sky background
-    image = np.random.poisson(
-        noise_level, size=(h + kh, w + kw)
-        ).astype("float64")
+    image = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+        "float64"
+    )
 
     # x and y of stars in the ref frame (int's)
     if star_refx is None:
@@ -212,8 +212,14 @@ class TestAlign(unittest.TestCase):
         from skimage.transform import estimate_transform, matrix_transform
 
         source = np.array(
-            [[1.4, 2.2], [5.3, 1.0], [3.7, 1.5],
-             [10.1, 9.6], [1.3, 10.2], [7.1, 2.0]]
+            [
+                [1.4, 2.2],
+                [5.3, 1.0],
+                [3.7, 1.5],
+                [10.1, 9.6],
+                [1.3, 10.2],
+                [7.1, 2.0],
+            ]
         )
         nsrc = source.shape[0]
         scale = 1.5  # scaling parameter
@@ -234,7 +240,7 @@ class TestAlign(unittest.TestCase):
         self.assertLess(t_true.rotation - t.rotation, 1e-10)
         self.assertLess(
             np.linalg.norm(t_true.translation - t.translation), 1e-10
-            )
+        )
         self.assertEqual(src_pts.shape[0], dst_pts.shape[0])
         self.assertEqual(src_pts.shape[1], 2)
         self.assertEqual(dst_pts.shape[1], 2)
@@ -267,8 +273,8 @@ class TestAlign(unittest.TestCase):
             return fraction_found
 
         registered_img, footp = aa.register(
-            source=self.image, target=self.image_ref,
-            )
+            source=self.image, target=self.image_ref
+        )
         self.assertIs(type(registered_img), np.ndarray)
         self.assertIs(type(footp), np.ndarray)
         self.assertIs(footp.dtype, np.dtype("bool"))
@@ -282,15 +288,14 @@ class TestAlign(unittest.TestCase):
         transf = SimilarityTransform(rotation=np.pi / 2.0, translation=(1, 0))
 
         nd = NDData(
-            [[0.0, 1.0], [2.0, 3.0]],
-            mask=[[True, False], [False, False]],
-            )
+            [[0.0, 1.0], [2.0, 3.0]], mask=[[True, False], [False, False]]
+        )
         registered_img, footp = aa.apply_transform(
-            transf, nd, nd, propagate_mask=True,
-            )
+            transf, nd, nd, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, True], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
@@ -298,11 +303,11 @@ class TestAlign(unittest.TestCase):
         # Test now if there is no assigned mask during creation
         nd = NDData([[0.0, 1.0], [2.0, 3.0]])
         registered_img, footp = aa.apply_transform(
-            transf, nd, nd, propagate_mask=True,
-            )
+            transf, nd, nd, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, False], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
@@ -319,22 +324,22 @@ class TestAlign(unittest.TestCase):
             unit="adu",
         )
         registered_img, footp = aa.apply_transform(
-            transf, cd, cd, propagate_mask=True,
-            )
+            transf, cd, cd, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, True], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
 
         cd = CCDData([[0.0, 1.0], [2.0, 3.0]], unit="adu")
         registered_img, footp = aa.apply_transform(
-            transf, cd, cd, propagate_mask=True,
-            )
+            transf, cd, cd, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, False], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
@@ -348,22 +353,22 @@ class TestAlign(unittest.TestCase):
 
         ma = np.ma.array(nparr, mask=mask)
         registered_img, footp = aa.apply_transform(
-            transf, ma, ma, propagate_mask=True,
-            )
+            transf, ma, ma, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, True], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
 
         ma = np.ma.array(nparr)
         registered_img, footp = aa.apply_transform(
-            transf, ma, ma, propagate_mask=True,
-            )
+            transf, ma, ma, propagate_mask=True
+        )
         err = np.linalg.norm(
-            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]]),
-            )
+            registered_img - np.array([[2.0, 0.0], [3.0, 1.0]])
+        )
         self.assertLess(err, 1e-6)
         err_mask = footp == np.array([[False, False], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
@@ -407,6 +412,32 @@ class TestAlign(unittest.TestCase):
         err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
         self.assertLess(err, 1e-2)
 
+    def test_unrepeated_sources(self):
+        source = np.array(
+            [[0.0, 2.0], [1.0, 3.0], [2.1, 1.75], [3.5, 1.0], [4.0, 2.0]]
+        )
+        R = np.array(
+            [
+                [np.cos(30.0 * np.pi / 180), np.sin(30.0 * np.pi / 180)],
+                [-np.sin(30.0 * np.pi / 180), np.cos(30.0 * np.pi / 180)],
+            ]
+        )
+        tr = np.array([-0.5, 2.5])
+        target = R.dot(source.T).T + tr
+        best_t, (s_list, t_list) = aa.find_transform(source, target)
+        self.assertEqual(len(s_list), len(t_list))
+        self.assertLessEqual(len(s_list), len(source))
+        # Assert no repeated sources used
+        source_set = set((x, y) for x, y in s_list)
+        self.assertEqual(len(s_list), len(source_set))
+        # Assert no repeated targets used
+        target_set = set((x, y) for x, y in t_list)
+        self.assertEqual(len(t_list), len(target_set))
+        # Assert s_list is a subset of source
+        self.assertTrue(source_set <= set((x, y) for x, y in source))
+        # Assert t_list is a subset of target
+        self.assertTrue(target_set <= set((x, y) for x, y in target))
+
 
 class TestFewSources(unittest.TestCase):
     def setUp(self):
@@ -434,7 +465,8 @@ class TestFewSources(unittest.TestCase):
             self.image,
             self.image_ref,
             self.star_ref_pos,
-            self.star_new_pos) = simulate_image_pair(
+            self.star_new_pos,
+        ) = simulate_image_pair(
             shape=(self.h, self.w),
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
@@ -454,8 +486,8 @@ class TestFewSources(unittest.TestCase):
         t, (src_pts, dst_pts) = aa.find_transform(source, dest)
         self.assertLess(t_true.scale - t.scale, 1e-10)
         self.assertLess(t_true.rotation - t.rotation, 1e-10)
-        self.assertLess(np.linalg.norm(
-            t_true.translation - t.translation), 1.0,
+        self.assertLess(
+            np.linalg.norm(t_true.translation - t.translation), 1.0
         )
         self.assertEqual(src_pts.shape[0], dst_pts.shape[0])
         self.assertLessEqual(src_pts.shape[0], source.shape[0])

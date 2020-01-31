@@ -49,7 +49,7 @@ ASTROALIGN_PY_PATH = os.path.join(PATH, "astroalign.py")
 with open(ASTROALIGN_PY_PATH, 'r') as f:
     for line in f:
         if line.startswith('__version__'):
-            _, _, AA_VERSION = line.replace("'", '').split()
+            _, _, AA_VERSION = line.replace('"', "").split()
             break
 
 
