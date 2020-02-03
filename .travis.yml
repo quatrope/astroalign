@@ -28,8 +28,3 @@ matrix:
           env: TOXENV=py37
           dist: xenial
           sudo: true
-
-after_success:
-  - codecov
-
-
