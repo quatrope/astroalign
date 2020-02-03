@@ -4,19 +4,12 @@ Tutorial
 A simple usage example
 ----------------------
 
-.. note::
-    Check this `Jupyter notebook <http://toros-astro.github.io/astroalign/>`_ for a more complete example.
-
-Suppose we have two images of about the same portion of the sky, and we would like to transform one of them to fit on top of the other one.
+Suppose we have two images of about the same portion of the sky, and we would like to transform one of them to fit on top of the other.
 Suppose we do not have WCS information, but we are confident that we could do it by eye, by matching some obvious asterisms on the two images.
 
 In this particular use case, astroalign can be of great help to automatize the process.
 
-After we load our images into numpy arrays, we simple choose one to be the source image to be transformed and the other to be the target.
-
-.. note::
-   astroalign will also accept as input, data objects with `data` and `mask` properties, like NDData, CCDData and Numpy masked arrays.
-   For more information, see :ref:`dataobjs`
+After we load our images into numpy arrays, we simple choose one to be the source image to be transformed, and the other to be the target.
 
 The usage for this simple most common case would be as follows::
 
@@ -25,7 +18,16 @@ The usage for this simple most common case would be as follows::
 
 ``registered_image`` is now a transformed (numpy array) image of ``source`` that will match pixel to pixel to ``target``.
 
-``footprint`` is a boolean numpy array, `True` for masked pixels with no information.
+``footprint`` is a boolean numpy array, ``True`` for masked pixels with no information.
+
+.. note::
+    * If instead of images, you have lists of bright, reference star positions on each image,
+      see :ref:`ftransf`.
+
+    * astroalign.register will also accept as input, data objects with `data` and `mask` properties, like NDData, CCDData and Numpy masked arrays.
+      For more information, see :ref:`dataobjs`
+
+    * Check this `Jupyter notebook <http://toros-astro.github.io/astroalign/>`_ for a more complete example.
 
 .. warning::
     Flux may not be conserved after the transformation.
@@ -34,33 +36,38 @@ Mask Fill Value
 ---------------
 
 If you need to mask the aligned image with a special value over the region where transformation had no pixel information,
-you can use the `footprint` mask to do so::
+you can use the ``footprint`` mask to do so::
 
     >>> registered_image, footprint = aa.register(source, target)
     >>> registered_image[footprint] = -99999.99
 
-Or you can pass the value to the `fill_value` argument::
+Or you can pass the value to the ``fill_value`` argument::
 
     >>> registered_image, footprint = aa.register(source, target, fill_value=-99999.99)
 
 Both will yield the same result.
+
+.. _ftransf:
 
 Finding the transformation
 --------------------------
 
 In some cases it may be necessary to inspect first the transformation parameters before applying it,
 or we may be interested only in a star to star correspondence between the images.
-For those cases, we can use ``find_transform``.
-
-``find_transform`` will return a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
-and the transformation parameters.
-It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on
-the ``target`` image.::
+For those cases, we can use ``find_transform``::
 
     >>> transf, (source_list, target_list) = aa.find_transform(source, target)
 
-source and target here can be either numpy arrays of the image pixels, or any iterable (x, y) pair,
-corresponding to a star position.
+The inputs ``source`` and ``target`` can be either numpy arrays of the image pixels,
+**or any iterable of (x, y) pairs**, corresponding to star positions.
+
+Having an iterable of (x, y) pairs is especially useful in situations where source detection requires special care.
+In situations like that, source detection can be done separately and the resulting catalogs fed to ``find_transform``.
+
+``find_transform`` returns a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
+and the transformation parameters.
+It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on
+the ``target`` image.
 
 The transformation parameters can be found in ``transf.rotation``, ``transf.traslation``, ``transf.scale``
 and the transformation matrix in ``transf.params``.
@@ -105,7 +112,7 @@ Applying a transformation to a set of points
     `matrix_transform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.matrix_transform>`_
     from `scikit-image` is imported into astroalign as a convenience.
 
-To apply a known transform to a set of points, we use `matrix_transform`.
+To apply a known transform to a set of points, we use ``matrix_transform``.
 Following the example in the previous section::
 
     >>> dst_calc = aa.matrix_transform(src, tform.params)
