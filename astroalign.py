@@ -229,7 +229,7 @@ def find_transform(source, target):
 
     Raises:
         TypeError: If input type of ``source`` or ``target`` is not supported.
-        Exception: If it cannot find more than 3 stars on any input.
+        ValueError: If it cannot find more than 3 stars on any input.
     """
     from scipy.spatial import KDTree
 
@@ -255,12 +255,12 @@ def find_transform(source, target):
 
     # Check for low number of reference points
     if len(source_controlp) < 3:
-        raise Exception(
+        raise ValueError(
             "Reference stars in source image are less than the "
             "minimum value (3)."
         )
     if len(target_controlp) < 3:
-        raise Exception(
+        raise ValueError(
             "Reference stars in target image are less than the "
             "minimum value (3)."
         )
@@ -480,7 +480,7 @@ def _find_sources(img):
 # Modified by Martin Beroiz
 
 
-class MaxIterError(Exception):
+class MaxIterError(RuntimeError):
     pass
 
 
