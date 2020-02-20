@@ -20,169 +20,173 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
 # =============================================================================
 # IMPORTS
 # =============================================================================
 
 import sys
 import os
+import timeit
 import datetime as dt
 import argparse
+from collections import OrderedDict
 
 import numpy as np
 
 import astroalign as aa
 
+from sklearn.model_selection import ParameterGrid
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
 import pandas as pd
 
-import sep
+import joblib
 
-from skimage.transform import SimilarityTransform
-
-from scipy import stats
+import tqdm
 
 
 test_path = os.path.abspath(os.path.dirname(aa.__file__))
 sys.path.insert(0, test_path)
 
-from tests.test_align import simulate_image_single  # noqa
+from tests.test_align import simulate_image_pair # noqa
 
 
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-SIZE = 256
+SIZES = (256, 512, 768, 1024)
 
-STARS = 300
+STARS = 10000
 
-NOISE = 100
+NOISE = 1000
 
-REPEATS = 35
+STEP = 10
 
-DEFAULT_SIZE = 6.4, 4.8
+STATEMENT = "aa.register(source, target)"
+
+REPEATS = 50
+
+DEFAULT_SIZE = (8, 8)
 
 
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
 
-def get_image(size, stars, noise, seed):
-    """Retrieves a single image"""
+def get_images(size, stars, noise, seed):
+    """Retrieves a pair source and target image"""
     if seed is not None:
         np.random.seed(seed)
     shape = (size, size)
-    image = simulate_image_single(
+    source, target = simulate_image_pair(
         shape=shape, num_stars=stars, noise_level=noise)[:2]
-    return image
+    return source, target
 
 
-def benchmark(size=SIZE, stars=STARS, noise=NOISE, repeats=REPEATS, seed=None):
-    # get image
-    image = get_image(size, stars, noise, seed)
-    imagedata = np.ascontiguousarray(image[0])
+def get_parameters(min_size, max_size, step_size, stars, noise, seed, repeats):
+    """Create a list of dictionaries with all the combinations of the given
+    parameters.
 
-    # detect sources (we know where they are, actually)
-    bkg = sep.Background(imagedata)
-    thresh = 3. * bkg.globalrms
-    sources = sep.extract(imagedata - bkg.back(), thresh)
-    sources.sort(order='flux')
+    """
 
-    # perform photometry
-    flux, fluxerr, flag = sep.sum_circle(
-        imagedata-bkg.back(), sources['x'],
-        sources['y'], 3.0, err=bkg.globalrms, gain=1.0)
+    sample_size = int((max_size - min_size) / step_size)
+    sizes = np.linspace(min_size, max_size, sample_size, dtype=int)
 
-    dframes = []
-    # transform it
-    for i_trsf in range(repeats):
-        dx, dy = np.random.randint(
-            low=-1 * size / 32., high=size / 32., size=2)
-        theta = (np.random.random()-0.5)*0.125*np.pi
-        s = 0.85+np.random.random()*0.3
-        trf = SimilarityTransform(
-            translation=(dx, dy), rotation=theta, scale=s)
+    grid = ParameterGrid({
+        "size": sizes, "stars": [stars],
+        "noise": [noise], "repeats": [repeats]})
+    grid = list(grid)
 
-        target = np.zeros(shape=np.array(imagedata.shape) * 2)
-        newimage = aa.apply_transform(trf, imagedata - bkg.back(), target)
+    # set the random state for run in parallel
+    random = np.random.RandomState(seed)
+    images_seeds = random.randint(1_000_000, size=len(grid))
 
-        # perform photometry on new places
-        src_coords = np.array([sources['x'], sources['y']]).T
-        new_coords = trf(src_coords).T
-        nflux, nfluxerr, nflag = sep.sum_circle(
-            newimage[0], new_coords[0], new_coords[1], 3.0 * s,
-            err=bkg.globalrms, gain=1.0)
+    for idx, g in enumerate(grid):
+        g["idx"] = idx
+        g["seed"] = seed
+        g["min_size"] = min_size
+        g["max_size"] = max_size
+        g["step_size"] = step_size
+        g["images_seed"] = images_seeds[idx]
+    return grid
 
-        # compare fluxes
-        good_flux = nflag == 0
-        new_to_orig = nflux[good_flux]/flux[good_flux]
 
-        # put everything in a pd dataframe
-        df = pd.DataFrame()
+def _test(idx, min_size, max_size, step_size, size,
+          stars, noise, seed, repeats, images_seed):
 
-        df["idx"] = np.array([i_trsf] * sum(good_flux))
-        df["seed"] = np.array([seed] * sum(good_flux))
-        df["repeats"] = np.array([repeats] * sum(good_flux))
+    # create the two images
+    source, target = get_images(
+        size=size, stars=stars, noise=noise, seed=images_seed)
 
-        df['orig_x'] = sources['x'][good_flux]
-        df['orig_y'] = sources['y'][good_flux]
-        df['orig_flux'] = flux[good_flux]
-        df['orig_fluxerr'] = fluxerr[good_flux]
-        df['orig_flag'] = flag[good_flux]
+    # create the timer
+    test_globals = {"aa": aa, "source": source, "target": target}
+    timer = timeit.Timer(stmt=STATEMENT, globals=test_globals)
 
-        df['new_x'] = new_coords[0][good_flux]
-        df['new_y'] = new_coords[1][good_flux]
-        df['new_flux'] = nflux[good_flux]
-        df['new_fluxerr'] = nfluxerr[good_flux]
-        df['new_flag'] = nflag[good_flux]
+    # find the number of loops
+    loops = timer.autorange()[0]
 
-        df['flux_ratio'] = new_to_orig
+    # create a copy of the params to be returned ad result
+    result = OrderedDict({
+        "idx": idx, "min_size": min_size, "max_size": max_size,
+        "step_size": step_size, "size": size, "noise": noise,
+        "stars": stars, "seed": seed, "images_seed": images_seed,
+        "repeats": repeats, "loops": loops})
 
-        df['trf_theta'] = theta
-        df['trf_dx'] = dx
-        df['trf_dy'] = dy
-        df['trf_scale'] = s
+    # execute the timeit
+    times = timer.repeat(repeats, loops)
 
-        slp, intpt, r_val, p_val, std_err = stats.linregress(
-            flux[good_flux], nflux[good_flux])
-        df['stats_slope'] = slp
-        df['stats_intpt'] = intpt
-        df['flux_per_area_ratio'] = df['flux_ratio'] / (df['trf_scale'] ** 2)
+    # store the times into the result
+    result["time"] = np.min(np.array(times) / loops)
+    for tidx, time in enumerate(times):
+        result[f"time_{tidx}"] = time
 
-        dframes.append(df)
+    return result
 
-    final_df = pd.concat(dframes)
 
-    return final_df
+def benchmark(min_size=min(SIZES), max_size=max(SIZES), step_size=STEP,
+              stars=STARS, noise=NOISE, seed=None, repeats=REPEATS, n_jobs=-1):
+
+    grid = get_parameters(
+        min_size=min_size, max_size=max_size, step_size=step_size,
+        repeats=repeats, stars=stars, noise=noise, seed=seed)
+
+    with joblib.Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(
+            joblib.delayed(_test)(**params) for params in tqdm.tqdm(grid))
+
+    df = pd.DataFrame(results)
+    return df
 
 
 def describe(results):
     repetitions = results.repeats.values[0]
-    resume = results[["flux_per_area_ratio"]].describe()
+    resume = results[["time", "loops"]].describe()
     return repetitions, resume
 
 
 def plot(results, ax):
+    df = results[["size", "time"]]
 
-    bins = np.arange(0.95, 1.05, 0.001)
-    ax.hist(
-        results.flux_per_area_ratio, normed=True,
-        histtype='step', bins=bins, label='Data')
+    df.plot.scatter(x='size', y='time', c='DarkBlue', ax=ax)
 
-    ax.plot(
-        bins + (bins[1] - bins[0]) / 2.,
-        stats.norm.pdf(
-            bins,
-            loc=np.mean(results.flux_per_area_ratio),
-            scale=np.std(results.flux_per_area_ratio)),
-        label='Gaussian')
+    # linear regression
+    x = df["size"].values.reshape((-1, 1))
+    y = df["time"].values
+    linear = LinearRegression().fit(x, y)
+    y_pred = linear.predict(x)
 
-    ax.legend(loc='best')
+    mqe = mean_squared_error(y, y_pred)
+    r2 = r2_score(y, y_pred)
 
-    ax.set_title("Flux ratio per unit area")
-    ax.set_xlabel('Flux ratio per unit area')
-    ax.set_ylabel('Normalized N')
+    ax.plot(x, y_pred, color='red', linewidth=2)
+
+    ax.set_title(
+        "Linear regression between size and time "
+        f"\n$mse={mqe:.3f}$ - $R^2={r2:.3f}$")
+    ax.set_xlabel("Size")
+    ax.set_ylabel("Time")
 
     return ax
 
@@ -195,7 +199,7 @@ class CLI:
 
     def __init__(self):
         self._parser = argparse.ArgumentParser(
-                description="Astroalign flux benchmark tool")
+                description="Astroalign time benchmark tool based on timeit")
         self._parser.set_defaults(
             callback=lambda ns: self.parser.print_usage())
 
@@ -210,13 +214,22 @@ class CLI:
 
         benchmark = subparsers.add_parser(
             "benchmark",
-            help="Execute and collect the flux benchmark data of astroalign")
+            help="Execute and collect the regression benchmark of astroalign")
         benchmark.set_defaults(callback=self.benchmark_command)
 
         benchmark.add_argument(
-            "--size", dest="size", type=int, default=SIZE,
-            help=("The size in pixels of the image. This parameter creates "
-                  f"square figure (defaults={SIZE})."))
+            "--max", dest="max_size", type=int, default=max(SIZES),
+            help=("The size in pixels of the bigger square image. "
+                  f"(defaults={max(SIZES)})."))
+
+        benchmark.add_argument(
+            "--min", dest="min_size", type=int, default=min(SIZES),
+            help=("The size in pixels of the smallest square image. "
+                  f"(defaults={max(SIZES)})."))
+
+        benchmark.add_argument(
+            "--step", dest="step_size", type=int, default=STEP,
+            help=f"The size between every image (defaults={STEP}).")
 
         benchmark.add_argument(
             "--stars", dest="stars", type=int, default=STARS,
@@ -228,16 +241,23 @@ class CLI:
             help=f"lambda parameter for poisson noise (default={NOISE})")
 
         benchmark.add_argument(
-            "--number", dest="repeats", type=int, default=REPEATS,
-            help=f"How many flux tests must be executed (default={REPEATS})")
-
-        benchmark.add_argument(
             "--seed", dest="seed", type=int, default=None,
             help=("Random seed used to initialize the pseudo-random number "
                   "generator. if seed is None, then random-state will try to "
                   "read data from /dev/urandom (or the Windows analogue) if "
                   "available or seed from the clock otherwise "
                   "(default=None)."))
+
+        benchmark.add_argument(
+            "--repeats", dest="repeats", type=int, default=REPEATS,
+            help=("How many measurements must be taken for every image pair. "
+                  "The final 'time' is the lower bound of all the times. "
+                  "Docs: https://docs.python.org/3.7/library/timeit.html"))
+
+        benchmark.add_argument(
+            "--jobs", dest="n_jobs", type=int, default=-1,
+            help=("The number of CPU to run the benchmars. "
+                  "-1 uses all the available CPUS (default=-1)"))
 
         benchmark.add_argument(
             "--out", "-o", dest="out", required=True,
@@ -256,20 +276,20 @@ class CLI:
         describe.add_argument(
             "--file", "-f", dest="file", required=True,
             type=argparse.FileType('r'),
-            help="File path of the flux benchmark data in CSV format")
+            help="File path of the time benchmark data in CSV format")
 
         # =====================================================================
         # plot subparser
         # =====================================================================
 
         plot = subparsers.add_parser(
-            "plot", help="Show the histogram of a given results")
+            "plot", help="Show three boxplots of a given results")
         plot.set_defaults(callback=self.plot_command)
 
         plot.add_argument(
             "--file", "-f", dest="file", required=True,
             type=argparse.FileType('r'),
-            help="File path of the flux benchmark data in CSV format")
+            help="File path of the time benchmark data in CSV format")
 
         plot.add_argument(
             "--size", dest="size", nargs=2, type=float,
@@ -314,36 +334,38 @@ class CLI:
 
         repetitions, resume = describe(results)
 
-        print(f"Data size: {len(results)}")
+        print(f"Executed: {len(results)} cases")
+
         print(f"\twith {repetitions} repetitions \n")
         print(">>>>> Resume <<<<<")
         print(resume)
         print("")
 
     def benchmark_command(self, ns):
-        if ns.repeats <= 0:
-            self._parser.error(f"'repeats' must be > 0. Found {ns.repeats}")
+        if ns.step_size <= 0:
+            self._parser.error(f"'step' must be > 0. Found {ns.step_size}")
 
         now = dt.datetime.now
 
         print(
-            f"[{now()}] Starting flux benchmark "
-            f"for astroalign {aa.__version__}...")
+            f"[{now()}] Starting benchmark for astroalign {aa.__version__}...")
         print("")
         results = benchmark(
-            size=ns.size, stars=ns.stars, noise=ns.noise,
-            repeats=ns.repeats, seed=ns.seed)
+            max_size=ns.max_size, min_size=ns.min_size, step_size=ns.step_size,
+            stars=ns.stars, noise=ns.noise, seed=ns.seed,
+            repeats=ns.repeats, n_jobs=ns.n_jobs)
 
         repetitions, resume = describe(results)
 
-        print(f"[{now()}] Data size: {len(results)}")
-        print(f"\twith {repetitions} repetitions \n")
+        print(f"[{now()}] Executed: {len(results)} cases")
 
+        print(f"\twith {repetitions} repetitions \n")
         print(">>>>> Resume <<<<<")
         print(resume)
         print("")
 
         results.to_csv(ns.out, index=False)
+        print(f"[{now()}] Data stored in '{ns.out.name}'")
 
     @property
     def parser(self):

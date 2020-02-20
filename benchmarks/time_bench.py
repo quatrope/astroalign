@@ -25,6 +25,8 @@
 # IMPORTS
 # =============================================================================
 
+import sys
+import os
 import timeit
 import datetime as dt
 import argparse
@@ -42,7 +44,10 @@ from sklearn.model_selection import ParameterGrid
 
 import tqdm
 
-from tests.test_align import simulate_image_pair
+test_path = os.path.abspath(os.path.dirname(aa.__file__))
+sys.path.insert(0, test_path)
+
+from tests.test_align import simulate_image_pair  # noqa
 
 
 # =============================================================================
