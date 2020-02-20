@@ -68,6 +68,8 @@ STATEMENT = "aa.register(source, target)"
 
 REPEATS = 50
 
+COMB_NUMBER = 10
+
 DEFAULT_SIZE = (8, 8)
 
 
@@ -85,7 +87,8 @@ def get_images(size, stars, noise, seed):
     return source, target
 
 
-def get_parameters(min_size, max_size, step_size, stars, noise, seed, repeats):
+def get_parameters(min_size, max_size, step_size, stars,
+                   noise, seed, comb_number, repeats):
     """Create a list of dictionaries with all the combinations of the given
     parameters.
 
@@ -97,7 +100,7 @@ def get_parameters(min_size, max_size, step_size, stars, noise, seed, repeats):
     grid = ParameterGrid({
         "size": sizes, "stars": [stars],
         "noise": [noise], "repeats": [repeats]})
-    grid = list(grid)
+    grid = list(grid) * comb_number
 
     # set the random state for run in parallel
     random = np.random.RandomState(seed)
@@ -146,11 +149,13 @@ def _test(idx, min_size, max_size, step_size, size,
 
 
 def benchmark(min_size=min(SIZES), max_size=max(SIZES), step_size=STEP,
-              stars=STARS, noise=NOISE, seed=None, repeats=REPEATS, n_jobs=-1):
+              stars=STARS, noise=NOISE, seed=None, repeats=REPEATS,
+              n_jobs=-1, comb_number=COMB_NUMBER):
 
     grid = get_parameters(
         min_size=min_size, max_size=max_size, step_size=step_size,
-        repeats=repeats, stars=stars, noise=noise, seed=seed)
+        repeats=repeats, stars=stars, noise=noise, seed=seed,
+        comb_number=comb_number)
 
     with joblib.Parallel(n_jobs=n_jobs) as parallel:
         results = parallel(
@@ -239,6 +244,11 @@ class CLI:
         benchmark.add_argument(
             "--noise", dest="noise", type=int, default=NOISE,
             help=f"lambda parameter for poisson noise (default={NOISE})")
+
+        benchmark.add_argument(
+            "--number", dest="comb_number", type=int, default=10,
+            help=("How many random images pairs must be created for one "
+                  f"size (default={COMB_NUMBER})."))
 
         benchmark.add_argument(
             "--seed", dest="seed", type=int, default=None,
@@ -353,7 +363,7 @@ class CLI:
         results = benchmark(
             max_size=ns.max_size, min_size=ns.min_size, step_size=ns.step_size,
             stars=ns.stars, noise=ns.noise, seed=ns.seed,
-            repeats=ns.repeats, n_jobs=ns.n_jobs)
+            repeats=ns.repeats, n_jobs=ns.n_jobs, comb_number=ns.comb_number)
 
         repetitions, resume = describe(results)
 
