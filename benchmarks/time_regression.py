@@ -167,7 +167,7 @@ def benchmark(min_size=min(SIZES), max_size=max(SIZES), step_size=STEP,
 
 def describe(results):
     repetitions = results.repeats.values[0]
-    resume = results[["time", "loops"]].describe()
+    resume = results[["time", "size", "loops"]].describe()
     return repetitions, resume
 
 
