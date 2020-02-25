@@ -174,7 +174,7 @@ def describe(results):
 def plot(results, ax):
     df = results[["size", "time"]]
 
-    df.plot.scatter(x='size', y='time', c='DarkBlue', ax=ax)
+    df.plot.scatter(x='size', y='time', c='LightBlue', ax=ax, marker=".")
 
     # linear regression
     x = df["size"].values.reshape((-1, 1))
@@ -185,13 +185,13 @@ def plot(results, ax):
     mqe = mean_squared_error(y, y_pred)
     r2 = r2_score(y, y_pred)
 
-    ax.plot(x, y_pred, color='red', linewidth=2)
+    ax.plot(x, y_pred, color='DarkBlue', linewidth=2)
 
     ax.set_title(
         "Linear regression between size and time "
         f"\n$mse={mqe:.3f}$ - $R^2={r2:.3f}$")
     ax.set_xlabel("Size")
-    ax.set_ylabel("Time")
+    ax.set_ylabel("Seconds")
 
     return ax
 
