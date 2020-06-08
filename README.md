@@ -5,7 +5,6 @@
 [![Build Status](https://travis-ci.org/toros-astro/astroalign.svg?branch=master)](https://travis-ci.org/toros-astro/astroalign)
 [![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/49095023.svg)](https://zenodo.org/badge/latestdoi/49095023)
 [![Updates](https://pyup.io/repos/github/toros-astro/astroalign/shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 [![Python 3](https://pyup.io/repos/github/toros-astro/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
 [![PyPI](https://img.shields.io/pypi/v/astroalign)](https://pypi.org/project/astroalign/)
@@ -64,9 +63,16 @@ The returned `transf` object is a scikit-image [`SimilarityTranform`](http://sci
 
 ***
 
-*This package is inspired by the [astrometry.net](http://astrometry.net) program*
+## Citation
+
+If you use astroalign in a scientific publication, we would appreciate citations to the following [paper](https://www.sciencedirect.com/science/article/pii/S221313372030038X):
+
+    Astroalign: A Python module for astronomical image registration.
+    Beroiz, M., Cabral, J. B., & Sanchez, B.
+    Astronomy & Computing, Volume 32, July 2020, 100384.
+
+***
 
 TOROS Dev Team
 
 <martinberoiz@gmail.com>
-

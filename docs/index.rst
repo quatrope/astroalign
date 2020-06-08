@@ -36,21 +36,28 @@ Citation
 If you use astroalign in a scientific publication, we would appreciate
 citations to the following paper:
 
-    Beroiz, M., Cabral, J. B., & Sanchez, B. (2019). Astroalign: A Python
-    module for astronomical image registration.
-    arXiv preprint arXiv:1909.02946.
+    Astroalign: A Python module for astronomical image registration.
+    Beroiz, M., Cabral, J. B., & Sanchez, B.
+    Astronomy and Computing, Volume 32, July 2020, 100384.
 
 
 Bibtex entry::
 
-    @article{beroiz2019astroalign,
-        title={Astroalign: A Python module for astronomical image registration},
-        author={Beroiz, Martin and Cabral, Juan B and Sanchez, Bruno},
-        journal={arXiv preprint arXiv:1909.02946},
-        year={2019}
+    @article{BEROIZ2020100384,
+    title = "Astroalign: A Python module for astronomical image registration",
+    journal = "Astronomy and Computing",
+    volume = "32",
+    pages = "100384",
+    year = "2020",
+    issn = "2213-1337",
+    doi = "https://doi.org/10.1016/j.ascom.2020.100384",
+    url = "http://www.sciencedirect.com/science/article/pii/S221313372030038X",
+    author = "M. Beroiz and J.B. Cabral and B. Sanchez",
+    keywords = "Astronomy, Image registration, Python package",
+    abstract = "We present an algorithm implemented in the Astroalign Python module for image registration     in astronomy. Our module does not rely on WCS information and instead matches three-point asterisms (    triangles) on the images to find the most accurate linear transformation between them. It is especially     useful in the context of aligning images prior to stacking or performing difference image analysis.     Astroalign can match images of different point-spread functions, seeing, and atmospheric conditions."
     }
 
-**Full Publication:** https://arxiv.org/abs/1909.02946
+**Full Publication:** https://www.sciencedirect.com/science/article/pii/S221313372030038X
 
 
 Or cite the project itself from `ASCL <http://ascl.net/1906.001>`_:
