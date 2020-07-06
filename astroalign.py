@@ -205,7 +205,7 @@ class _MatchTransform:
         return error
 
 
-def find_transform(source, target):
+def find_transform(source, target, detection_sigma=5):
     """Estimate the transform between ``source`` and ``target``.
 
     Return a SimilarityTransform object ``T`` that maps pixel x, y indices from
@@ -220,6 +220,8 @@ def find_transform(source, target):
         target (array-like): Either a numpy array of the target (destination)
             image or an interable of (x, y) coordinates of the target
             control points.
+        detection_sigma: Factor of background std-dev above which is considered
+            a detection.
 
     Returns:
         The transformation object and a tuple of corresponding star positions
@@ -402,7 +404,9 @@ def apply_transform(
     return aligned_image, footprint
 
 
-def register(source, target, fill_value=None, propagate_mask=False):
+def register(
+    source, target, fill_value=None, propagate_mask=False, detection_sigma=5
+):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
     Args:
@@ -414,6 +418,8 @@ def register(source, target, fill_value=None, propagate_mask=False):
             where footprint == True.
         propagate_mask (bool): Wether to propagate the mask in source.mask
             onto footprint.
+        detection_sigma: Factor of background std-dev above which is considered
+            a detection.
 
     Return:
         A tuple (aligned_image, footprint).
@@ -430,7 +436,7 @@ def register(source, target, fill_value=None, propagate_mask=False):
     return aligned_image, footprint
 
 
-def _find_sources(img):
+def _find_sources(img, detection_sigma=5):
     "Return sources (x, y) sorted by brightness."
 
     import sep
@@ -440,7 +446,7 @@ def _find_sources(img):
     else:
         image = img.astype("float32")
     bkg = sep.Background(image)
-    thresh = 3.0 * bkg.globalrms
+    thresh = detection_sigma * bkg.globalrms
     sources = sep.extract(image - bkg.back(), thresh)
     sources.sort(order="flux")
     return _np.array([[asrc["x"], asrc["y"]] for asrc in sources[::-1]])
