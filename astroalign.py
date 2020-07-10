@@ -166,7 +166,7 @@ arranged as described in _arrangetriplet.
 
     # Remove here all possible duplicate triangles
     uniq_ind = [
-        pos for (pos, elem) in enumerate(inv) if elem not in inv[pos + 1 :]
+        pos for (pos, elem) in enumerate(inv) if elem not in inv[pos + 1:]
     ]
     inv_uniq = _np.array(inv)[uniq_ind]
     triang_vrtx_uniq = _np.array(triang_vrtx)[uniq_ind]
@@ -240,7 +240,7 @@ def find_transform(source, target):
         else:
             # Assume it's a 2D image
             source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
-    except:
+    except Exception:
         raise TypeError("Input type for source not supported.")
 
     try:
@@ -250,7 +250,7 @@ def find_transform(source, target):
         else:
             # Assume it's a 2D image
             target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
-    except:
+    except Exception:
         raise TypeError("Input type for target not supported.")
 
     # Check for low number of reference points
