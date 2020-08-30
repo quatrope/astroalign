@@ -28,6 +28,7 @@
 import os
 
 from ez_setup import use_setuptools
+
 use_setuptools()
 
 from setuptools import setup  # noqa
@@ -46,9 +47,9 @@ PATH = os.path.abspath(os.path.dirname(__file__))
 
 ASTROALIGN_PY_PATH = os.path.join(PATH, "astroalign.py")
 
-with open(ASTROALIGN_PY_PATH, 'r') as f:
+with open(ASTROALIGN_PY_PATH, "r") as f:
     for line in f:
-        if line.startswith('__version__'):
+        if line.startswith("__version__"):
             _, _, AA_VERSION = line.replace('"', "").split()
             break
 
@@ -59,7 +60,7 @@ with open(ASTROALIGN_PY_PATH, 'r') as f:
 
 README_MD_PATH = os.path.join(PATH, "README.md")
 
-with open(README_MD_PATH, 'r') as f:
+with open(README_MD_PATH, "r") as f:
     LONG_DESCRIPTION = f.read()
 
 
@@ -67,30 +68,28 @@ with open(README_MD_PATH, 'r') as f:
 # THE REQUIREMENTS!
 # =============================================================================
 
-REQUIREMENTS = [
-    "numpy>=1.6.2",
-    "scipy>=0.15",
-    "scikit-image",
-    "sep"]
+REQUIREMENTS = ["numpy>=1.6.2", "scipy>=0.15", "scikit-image", "sep"]
 
 
 # =============================================================================
 # THE SETUP ITSELF!
 # =============================================================================
 
+
 def run():
     setup(
-        name='astroalign',
+        name="astroalign",
         version=AA_VERSION,
-        description='Astrometric Alignment of Images',
+        description="Astrometric Alignment of Images",
         long_description=LONG_DESCRIPTION,
-        long_description_content_type='text/markdown',
-        author='Martin Beroiz',
-        author_email='martinberoiz@gmail.com',
-        url='https://astroalign.readthedocs.io/',
-        py_modules=['astroalign', 'ez_setup'],
+        long_description_content_type="text/markdown",
+        author="Martin Beroiz",
+        author_email="martinberoiz@gmail.com",
+        url="https://astroalign.readthedocs.io/",
+        py_modules=["astroalign", "ez_setup"],
         install_requires=REQUIREMENTS,
-        test_suite='tests')
+        test_suite="tests",
+    )
 
 
 if __name__ == "__main__":

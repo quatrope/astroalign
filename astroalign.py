@@ -106,10 +106,11 @@ def _invariantfeatures(x1, x2, x3):
 
 def _arrangetriplet(sources, vertex_indices):
     """Return vertex_indices ordered in an (a, b, c) form where:
-  a is the vertex defined by L1 & L2
-  b is the vertex defined by L2 & L3
-  c is the vertex defined by L3 & L1
-and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
+      a is the vertex defined by L1 & L2
+      b is the vertex defined by L2 & L3
+      c is the vertex defined by L3 & L1
+    and L1 < L2 < L3 are the sides of the triangle
+    defined by vertex_indices."""
     ind1, ind2, ind3 = vertex_indices
     x1, x2, x3 = sources[vertex_indices]
 
@@ -133,9 +134,8 @@ and L1 < L2 < L3 are the sides of the triangle defined by vertex_indices."""
 
 def _generate_invariants(sources):
     """Return an array of (unique) invariants derived from the array `sources`.
-Return an array of the indices of `sources` that correspond to each invariant,
-arranged as described in _arrangetriplet.
-"""
+    Return an array of the indices of `sources` that correspond to each
+    invariant, arranged as described in _arrangetriplet."""
     from scipy.spatial import KDTree
     from itertools import combinations
     from functools import partial
@@ -166,7 +166,7 @@ arranged as described in _arrangetriplet.
 
     # Remove here all possible duplicate triangles
     uniq_ind = [
-        pos for (pos, elem) in enumerate(inv) if elem not in inv[pos + 1:]
+        pos for (pos, elem) in enumerate(inv) if elem not in inv[pos + 1 :]
     ]
     inv_uniq = _np.array(inv)[uniq_ind]
     triang_vrtx_uniq = _np.array(triang_vrtx)[uniq_ind]
@@ -181,12 +181,12 @@ class _MatchTransform:
 
     def fit(self, data):
         """
-    Return the best 2D similarity transform from the points given in data.
+        Return the best 2D similarity transform from the points given in data.
 
-    data: N sets of similar corresponding triangles.
-        3 indices for a triangle in ref
-        and the 3 indices for the corresponding triangle in target;
-        arranged in a (N, 3, 2) array.
+        data: N sets of similar corresponding triangles.
+            3 indices for a triangle in ref
+            and the 3 indices for the corresponding triangle in target;
+            arranged in a (N, 3, 2) array.
         """
         d1, d2, d3 = data.shape
         s, d = data.reshape(d1 * d2, d3).T
@@ -447,7 +447,7 @@ def _find_sources(img, detection_sigma=5):
         image = img.astype("float32")
     bkg = sep.Background(image)
     thresh = detection_sigma * bkg.globalrms
-    sources = sep.extract(image - bkg.back(), thresh)
+    sources = sep.extract(image - bkg.back(), thresh, minarea=9)
     sources.sort(order="flux")
     return _np.array([[asrc["x"], asrc["y"]] for asrc in sources[::-1]])
 
@@ -493,22 +493,21 @@ class MaxIterError(RuntimeError):
 def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
     """fit model parameters to data using the RANSAC algorithm
 
-This implementation written from pseudocode found at
-http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
+    This implementation written from pseudocode found at
+    http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
 
-Given:
-    data: a set of data points
-    model: a model that can be fitted to data points
-    min_data_points: the minimum number of data values required to fit the
-        model
-    max_iter: the maximum number of iterations allowed in the algorithm
-    thresh: a threshold value to determine when a data point fits a model
-    min_matches: the min number of matches required to assert that a model
-        fits well to data
-Return:
-    bestfit: model parameters which best fit the data (or nil if no good model
-              is found)
-"""
+    Given:
+        data: a set of data points
+        model: a model that can be fitted to data points
+        min_data_points: the minimum number of data values required to fit the
+            model
+        max_iter: the maximum number of iterations allowed in the algorithm
+        thresh: a threshold value to determine when a data point fits a model
+        min_matches: the min number of matches required to assert that a model
+            fits well to data
+    Return:
+        bestfit: model parameters which best fit the data (or nil if no good
+                  model is found)"""
     iterations = 0
     bestfit = None
     best_inlier_idxs = None

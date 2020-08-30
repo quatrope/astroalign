@@ -93,7 +93,7 @@ def simulate_image_pair(
 
     image_ref[ref_rows, ref_cols] += ref_flux
     image_ref = signal.convolve2d(image_ref, psf, mode="same")
-    image_ref = image_ref[kh // 2: -kh // 2, kw // 2: -kw // 2]
+    image_ref = image_ref[kh // 2 : -kh // 2, kw // 2 : -kw // 2]
     # Adjust here the positions of rows and cols after cropping image
     ref_cols -= kw // 2
     ref_rows -= kh // 2
@@ -121,7 +121,7 @@ def simulate_image_pair(
 
     image[new_rows, new_cols] += new_flux
     image = signal.convolve2d(image, psf, mode="same")
-    image = image[kh // 2: -kh // 2, kw // 2: -kw // 2]
+    image = image[kh // 2 : -kh // 2, kw // 2 : -kw // 2]
     # Adjust here the positions of rows and cols after cropping image
     new_cols -= kw // 2
     new_rows -= kh // 2
@@ -180,7 +180,7 @@ def simulate_image_single(
 
     image[rows, cols] += flux
     image = signal.convolve2d(image, psf, mode="same")
-    image = image[kh // 2: -kh // 2, kw // 2: -kw // 2]
+    image = image[kh // 2 : -kh // 2, kw // 2 : -kw // 2]
     # Adjust here the positions of rows and cols after cropping image
     cols -= kw // 2
     rows -= kh // 2
@@ -447,8 +447,9 @@ class TestFewSources(unittest.TestCase):
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
 
-    def check_if_ok(self, numstars):
-        "Helper function with common test code for 3, 4, 5, and 6 stars"
+    def check_if_findtransform_ok(self, numstars):
+        """Helper function to test find_transform with common test code
+        for 3, 4, 5, and 6 stars"""
         from skimage.transform import estimate_transform, matrix_transform
 
         if numstars > 6:
@@ -498,24 +499,80 @@ class TestFewSources(unittest.TestCase):
 
     def test_find_transform_twosources(self):
         with self.assertRaises(Exception):
-            self.check_if_ok(2)
+            self.check_if_findtransform_ok(2)
 
     def test_find_transform_threesources(self):
-        self.check_if_ok(3)
+        self.check_if_findtransform_ok(3)
 
     def test_find_transform_foursources(self):
-        self.check_if_ok(4)
+        self.check_if_findtransform_ok(4)
 
     def test_find_transform_fivesources(self):
-        self.check_if_ok(5)
+        self.check_if_findtransform_ok(5)
 
     def test_find_transform_sixsources(self):
-        self.check_if_ok(6)
+        self.check_if_findtransform_ok(6)
 
-    # def test_register(self):
-    #    ...
-    # def test_consistent_invert(self):
-    #    ...
+    def check_if_register_ok(self, numstars):
+        """Helper function to test register with common test code
+        for 3, 4, 5, and 6 stars"""
+        from skimage.transform import estimate_transform
+
+        if numstars > 6:
+            raise NotImplementedError
+
+        # x and y of stars in the ref frame (int's)
+        self.star_refx = np.array([100, 120, 400, 400, 200, 200])[:numstars]
+        self.star_refy = np.array([150, 200, 200, 320, 210, 350])[:numstars]
+        self.num_stars = numstars
+        # Fluxes of stars
+        self.star_f = np.array(numstars * [700.0])
+
+        (
+            self.image,
+            self.image_ref,
+            self.star_ref_pos,
+            self.star_new_pos,
+        ) = simulate_image_pair(
+            shape=(self.h, self.w),
+            translation=(self.x_offset, self.y_offset),
+            rot_angle_deg=50.0,
+            noise_level=50,
+            num_stars=self.num_stars,
+            star_refx=self.star_refx,
+            star_refy=self.star_refy,
+            star_flux=self.star_f,
+        )
+
+        aligned, footprint = aa.register(self.image_ref, self.image)
+
+        source = self.star_ref_pos
+        dest = self.star_new_pos.copy()
+        t_true = estimate_transform("similarity", source, dest)
+        aligned_true, fp = aa.apply_transform(
+            t_true, self.image_ref, self.image
+        )
+
+        err = np.linalg.norm((aligned_true - aligned)[fp], 1) / np.linalg.norm(
+            (aligned_true)[fp], 1
+        )
+        self.assertLess(err, 1e-1)
+
+    def test_register_twosources(self):
+        with self.assertRaises(Exception):
+            self.check_if_register_ok(2)
+
+    def test_register_threesources(self):
+        self.check_if_register_ok(3)
+
+    def test_register_foursources(self):
+        self.check_if_register_ok(4)
+
+    def test_register_fivesources(self):
+        self.check_if_register_ok(5)
+
+    def test_register_sixsources(self):
+        self.check_if_register_ok(6)
 
 
 if __name__ == "__main__":
