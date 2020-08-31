@@ -412,8 +412,8 @@ def register(
     Args:
         source (numpy array): A 2D numpy array of the source image to be
             transformed.
-        target (numpy array): A 2D numpy array of the target image. Only used
-            to set the output image shape.
+        target (numpy array): A 2D numpy array of the target image. Used
+            to set the output image shape as well.
         fill_value (float): A value to fill in the areas of aligned_image
             where footprint == True.
         propagate_mask (bool): Wether to propagate the mask in source.mask
