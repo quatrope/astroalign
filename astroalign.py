@@ -322,9 +322,8 @@ def find_transform(
         # calculate error
         s_vertex = source_controlp[s_i]
         t_vertex = target_controlp[t_i]
-        s_vertex_expanded = _np.append(s_vertex, [1]).reshape(3, 1)
-        s_vertex_pred = best_t.params.dot(s_vertex_expanded)[:2].reshape(-1)
-        error = _np.linalg.norm(s_vertex_pred - t_vertex)
+        t_vertex_pred = matrix_transform(s_vertex, best_t.params)
+        error = _np.linalg.norm(t_vertex_pred - t_vertex)
 
         # if s_i not in dict, or if its error is smaller than previous error
         if s_i not in inl_dict or (error < inl_dict[s_i][1]):
