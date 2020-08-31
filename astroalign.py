@@ -43,7 +43,7 @@ functions, seeing and atmospheric conditions.
 """
 
 
-__version__ = "2.0.2"
+__version__ = "2.1"
 
 __all__ = [
     "MIN_MATCHES_FRACTION",
