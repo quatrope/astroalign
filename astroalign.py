@@ -1,6 +1,6 @@
 # MIT License
 
-# Copyright (c) 2016-2019 Martin Beroiz
+# Copyright (c) 2016 Martin Beroiz
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,9 +59,8 @@ __all__ = [
 
 
 import numpy as _np
-
 from skimage.transform import estimate_transform
-from skimage.transform import matrix_transform  # noqa
+from skimage.transform import matrix_transform
 
 PIXEL_TOL = 2
 """The pixel distance tolerance to assume two invariant points are the same.
