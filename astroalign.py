@@ -205,7 +205,7 @@ class _MatchTransform:
         return error
 
 
-def find_transform(source, target, detection_sigma=5):
+def find_transform(source, target, detection_sigma=5, min_area=5):
     """Estimate the transform between ``source`` and ``target``.
 
     Return a SimilarityTransform object ``T`` that maps pixel x, y indices from
@@ -221,7 +221,9 @@ def find_transform(source, target, detection_sigma=5):
             image or an interable of (x, y) coordinates of the target
             control points.
         detection_sigma: Factor of background std-dev above which is considered
-            a detection.
+            a detection. This value is ignored if input are not images.
+        min_area: Minimum number of connected pixels to be considered a source.
+            This value is ignored if input are not images.
 
     Returns:
         The transformation object and a tuple of corresponding star positions
@@ -241,7 +243,9 @@ def find_transform(source, target, detection_sigma=5):
             source_controlp = _np.array(source)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
-            source_controlp = _find_sources(source)[:MAX_CONTROL_POINTS]
+            source_controlp = _find_sources(
+                source, detection_sigma=detection_sigma, min_area=min_area
+            )[:MAX_CONTROL_POINTS]
     except Exception:
         raise TypeError("Input type for source not supported.")
 
@@ -251,7 +255,9 @@ def find_transform(source, target, detection_sigma=5):
             target_controlp = _np.array(target)[:MAX_CONTROL_POINTS]
         else:
             # Assume it's a 2D image
-            target_controlp = _find_sources(target)[:MAX_CONTROL_POINTS]
+            target_controlp = _find_sources(
+                target, detection_sigma=detection_sigma, min_area=min_area
+            )[:MAX_CONTROL_POINTS]
     except Exception:
         raise TypeError("Input type for target not supported.")
 
@@ -405,7 +411,12 @@ def apply_transform(
 
 
 def register(
-    source, target, fill_value=None, propagate_mask=False, detection_sigma=5
+    source,
+    target,
+    fill_value=None,
+    propagate_mask=False,
+    detection_sigma=5,
+    min_area=5,
 ):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
@@ -420,6 +431,7 @@ def register(
             onto footprint.
         detection_sigma: Factor of background std-dev above which is considered
             a detection.
+        min_area: Minimum number of connected pixels to be considered a source.
 
     Return:
         A tuple (aligned_image, footprint).
@@ -429,14 +441,19 @@ def register(
 
 
     """
-    t, __ = find_transform(source=source, target=target)
+    t, __ = find_transform(
+        source=source,
+        target=target,
+        detection_sigma=detection_sigma,
+        min_area=min_area,
+    )
     aligned_image, footprint = apply_transform(
         t, source, target, fill_value, propagate_mask
     )
     return aligned_image, footprint
 
 
-def _find_sources(img, detection_sigma=5):
+def _find_sources(img, detection_sigma=5, min_area=5):
     "Return sources (x, y) sorted by brightness."
 
     import sep
@@ -447,7 +464,7 @@ def _find_sources(img, detection_sigma=5):
         image = img.astype("float32")
     bkg = sep.Background(image)
     thresh = detection_sigma * bkg.globalrms
-    sources = sep.extract(image - bkg.back(), thresh, minarea=9)
+    sources = sep.extract(image - bkg.back(), thresh, minarea=min_area)
     sources.sort(order="flux")
     return _np.array([[asrc["x"], asrc["y"]] for asrc in sources[::-1]])
 
