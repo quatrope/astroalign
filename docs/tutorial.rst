@@ -32,6 +32,9 @@ The usage for this simple most common case would be as follows::
 .. warning::
     Flux may not be conserved after the transformation.
 
+.. note::
+    If your image requires special care see :ref:`examples`.
+
 Mask Fill Value
 ---------------
 

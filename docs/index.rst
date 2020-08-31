@@ -83,6 +83,7 @@ Guide:
 
    installation
    tutorial
+   examples
    api
 
 
