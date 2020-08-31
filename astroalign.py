@@ -378,7 +378,7 @@ def apply_transform(
         order=3,
         mode="constant",
         cval=_np.median(source_data),
-        clip=False,
+        clip=True,
         preserve_range=True,
     )
     footprint = warp(
