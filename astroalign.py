@@ -46,7 +46,6 @@ functions, seeing and atmospheric conditions.
 __version__ = "2.0.2"
 
 __all__ = [
-    "MAX_CONTROL_POINTS",
     "MIN_MATCHES_FRACTION",
     "MaxIterError",
     "NUM_NEAREST_NEIGHBORS",
@@ -63,12 +62,6 @@ import numpy as _np
 
 from skimage.transform import estimate_transform
 from skimage.transform import matrix_transform  # noqa
-
-
-MAX_CONTROL_POINTS = 50
-"""The maximum control points (stars) to use to build the invariants.
-
-Default: 50"""
 
 PIXEL_TOL = 2
 """The pixel distance tolerance to assume two invariant points are the same.
@@ -205,7 +198,9 @@ class _MatchTransform:
         return error
 
 
-def find_transform(source, target, detection_sigma=5, min_area=5):
+def find_transform(
+    source, target, max_control_points=50, detection_sigma=5, min_area=5
+):
     """Estimate the transform between ``source`` and ``target``.
 
     Return a SimilarityTransform object ``T`` that maps pixel x, y indices from
@@ -220,6 +215,8 @@ def find_transform(source, target, detection_sigma=5, min_area=5):
         target (array-like): Either a numpy array of the target (destination)
             image or an interable of (x, y) coordinates of the target
             control points.
+        max_control_points: The maximum number of control point-sources to find
+            the transformation.
         detection_sigma: Factor of background std-dev above which is considered
             a detection. This value is ignored if input are not images.
         min_area: Minimum number of connected pixels to be considered a source.
@@ -240,24 +237,24 @@ def find_transform(source, target, detection_sigma=5, min_area=5):
     try:
         if len(source[0]) == 2:
             # Assume it's a list of (x, y) pairs
-            source_controlp = _np.array(source)[:MAX_CONTROL_POINTS]
+            source_controlp = _np.array(source)[:max_control_points]
         else:
             # Assume it's a 2D image
             source_controlp = _find_sources(
                 source, detection_sigma=detection_sigma, min_area=min_area
-            )[:MAX_CONTROL_POINTS]
+            )[:max_control_points]
     except Exception:
         raise TypeError("Input type for source not supported.")
 
     try:
         if len(target[0]) == 2:
             # Assume it's a list of (x, y) pairs
-            target_controlp = _np.array(target)[:MAX_CONTROL_POINTS]
+            target_controlp = _np.array(target)[:max_control_points]
         else:
             # Assume it's a 2D image
             target_controlp = _find_sources(
                 target, detection_sigma=detection_sigma, min_area=min_area
-            )[:MAX_CONTROL_POINTS]
+            )[:max_control_points]
     except Exception:
         raise TypeError("Input type for target not supported.")
 
@@ -415,6 +412,7 @@ def register(
     target,
     fill_value=None,
     propagate_mask=False,
+    max_control_points=50,
     detection_sigma=5,
     min_area=5,
 ):
@@ -429,6 +427,8 @@ def register(
             where footprint == True.
         propagate_mask (bool): Wether to propagate the mask in source.mask
             onto footprint.
+        max_control_points: The maximum number of control point-sources to find
+            the transformation.
         detection_sigma: Factor of background std-dev above which is considered
             a detection.
         min_area: Minimum number of connected pixels to be considered a source.
@@ -444,6 +444,7 @@ def register(
     t, __ = find_transform(
         source=source,
         target=target,
+        max_control_points=max_control_points,
         detection_sigma=detection_sigma,
         min_area=min_area,
     )
