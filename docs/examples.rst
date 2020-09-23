@@ -7,7 +7,7 @@ Very few stars on the field
 ---------------------------
 
 .. note::
-    The minimum number of star necessary to find a transformation is 3
+    The minimum number of stars necessary to find a transformation is 3
 
 If your field has few stars on the field, of about 3 to 6, you may want to
 restrict astroalign to only pick that number of stars, to prevent catching
