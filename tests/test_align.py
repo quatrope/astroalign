@@ -623,5 +623,42 @@ class TestFewSources(unittest.TestCase):
         self.check_if_register_ok(6)
 
 
+class TestColorImages(unittest.TestCase):
+    def setUp(self):
+        (
+            image_new,
+            image_ref,
+            star_ref_pos,
+            star_new_pos,
+        ) = simulate_image_pair(
+            shape=(256, 256),
+            kshape=(8, 8),
+            noise_level=500,
+            gshape=(21, 21),
+            gsigma=1.5,
+            translation=(10, -20),
+            rot_angle_deg=50.0,
+            num_stars=10,
+            star_refx=None,
+            star_refy=None,
+            star_flux=None,
+        )
+        self.nchannels = 3
+        self.image_new = []
+        self.image_ref = []
+        for achannel in range(self.nchannels):
+            self.image_new.append(image_new.copy())
+            self.image_ref.append(image_ref.copy())
+        self.image_new = np.array(self.image_new)
+        self.image_ref = np.array(self.image_ref)
+
+    def test_register_three_channels(self):
+        "Test register works with RGB images"
+        registered_img, footp = aa.register(
+            source=self.image_new, target=self.image_ref
+        )
+        self.assertEqual(registered_img.ndim, self.image_new.ndim)
+
+
 if __name__ == "__main__":
     unittest.main()

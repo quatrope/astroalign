@@ -254,12 +254,19 @@ def find_transform(
     except Exception:
         raise TypeError("Input type for source not supported.")
 
+    nchannels = 0
     try:
         if len(_data(target)[0]) == 2:
             # Assume it's a list of (x, y) pairs
             target_controlp = _np.array(target)[:max_control_points]
         else:
             # Assume it's a 2D image
+            
+            
+
+
+
+
             target_controlp = _find_sources(
                 _data(target),
                 detection_sigma=detection_sigma,
