@@ -203,6 +203,19 @@ def _data(image):
     else:
         return image
 
+def _bw(image):
+    "Return a 2D numpy array for an array of arbitrary channels"
+    if image.ndim == 2:
+        return image
+    return _np.mean(image, axis=-1)
+
+def _shape(image):
+    "Return a 2D shape for the image, ignoring channel info"
+    if image.ndim == 2:
+        return image.shape
+    h, w, ch = image.shape
+    return h, w
+
 
 def find_transform(
     source, target, max_control_points=50, detection_sigma=5, min_area=5
@@ -247,13 +260,14 @@ def find_transform(
         else:
             # Assume it's a 2D image
             source_controlp = _find_sources(
-                _data(source),
+                _bw(_data(source)),
                 detection_sigma=detection_sigma,
-                min_area=min_area,
+                min_area=min_area
             )[:max_control_points]
     except Exception:
         raise TypeError("Input type for source not supported.")
 
+    nchannels = 0
     try:
         if len(_data(target)[0]) == 2:
             # Assume it's a list of (x, y) pairs
@@ -261,7 +275,7 @@ def find_transform(
         else:
             # Assume it's a 2D image
             target_controlp = _find_sources(
-                _data(target),
+                _bw(_data(target)),
                 detection_sigma=detection_sigma,
                 min_area=min_area,
             )[:max_control_points]
@@ -385,8 +399,9 @@ def apply_transform(
         clip=True,
         preserve_range=True,
     )
+
     footprint = warp(
-        _np.zeros(source_data.shape, dtype="float32"),
+        _np.zeros(_shape(source_data), dtype="float32"),
         inverse_map=transform.inverse,
         output_shape=target_shape,
         cval=1.0,
