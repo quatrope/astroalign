@@ -625,32 +625,50 @@ class TestFewSources(unittest.TestCase):
 
 class TestColorImages(unittest.TestCase):
     def setUp(self):
+        self.h = 512  # image height
+        self.w = 512  # image width
+        self.x_offset = 10
+        self.y_offset = -20
+        self.rot_angle = 50.0 * np.pi / 180.0
         (
-            image_new,
-            image_ref,
-            star_ref_pos,
-            star_new_pos,
+            schannel_new,
+            schannel_ref,
+            self.star_ref_pos,
+            self.star_new_pos,
         ) = simulate_image_pair(
-            shape=(256, 256),
-            kshape=(8, 8),
-            noise_level=500,
-            gshape=(21, 21),
-            gsigma=1.5,
-            translation=(10, -20),
+            shape=(self.h, self.w),
+            translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
-            num_stars=10,
-            star_refx=None,
-            star_refy=None,
-            star_flux=None,
         )
         self.nchannels = 3
-        self.image_new = []
-        self.image_ref = []
+        image_new = []
+        image_ref = []
         for achannel in range(self.nchannels):
-            self.image_new.append(image_new.copy())
-            self.image_ref.append(image_ref.copy())
-        self.image_new = np.array(self.image_new)
-        self.image_ref = np.array(self.image_ref)
+            image_new.append(schannel_new.copy())
+            image_ref.append(schannel_ref.copy())
+        image_new = np.array(image_new)
+        image_ref = np.array(image_ref)
+        # Move the channel axis to the last position
+        self.image_ref = np.moveaxis(image_ref, 0, -1)
+        self.image_new = np.moveaxis(image_new, 0, -1)
+
+    def test_find_transform_three_channels(self):
+        "Test find_transform works with RGB images"
+        transf, __ = aa.find_transform(
+            source=self.image_new, target=self.image_ref
+        )
+        transl = (self.x_offset, self.y_offset)
+        translation_error = np.array(transf.translation) - np.array(transl)
+        print("""
+
+
+        {}
+        {}
+        
+
+            """.format(transl, transf.translation))
+        self.assertTrue(np.linalg.norm(translation_error) < 1E-8)
+
 
     def test_register_three_channels(self):
         "Test register works with RGB images"

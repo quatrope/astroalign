@@ -204,6 +204,13 @@ def _data(image):
         return image
 
 
+def _bw(image):
+    "Return a 2D numpy array for an array of arbitrary channels"
+    if image.ndim == 2:
+        return image
+    return _np.mean(image, axis=-1)
+
+
 def find_transform(
     source, target, max_control_points=50, detection_sigma=5, min_area=5
 ):
@@ -247,9 +254,9 @@ def find_transform(
         else:
             # Assume it's a 2D image
             source_controlp = _find_sources(
-                _data(source),
+                _bw(_data(source)),
                 detection_sigma=detection_sigma,
-                min_area=min_area,
+                min_area=min_area
             )[:max_control_points]
     except Exception:
         raise TypeError("Input type for source not supported.")
@@ -261,14 +268,8 @@ def find_transform(
             target_controlp = _np.array(target)[:max_control_points]
         else:
             # Assume it's a 2D image
-            
-            
-
-
-
-
             target_controlp = _find_sources(
-                _data(target),
+                _bw(_data(target)),
                 detection_sigma=detection_sigma,
                 min_area=min_area,
             )[:max_control_points]
