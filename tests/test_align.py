@@ -247,38 +247,39 @@ class TestAlign(unittest.TestCase):
         dst_pts_test = matrix_transform(src_pts, t.params)
         self.assertLess(np.linalg.norm(dst_pts_test - dst_pts), 1e-10)
 
+    def compare_image(self, the_image):
+        """Return the fraction of sources found in the reference image"""
+        # pixel comparison is not good, doesn't work. Compare catalogs.
+        full_algn = the_image.astype("float32")
+        import sep
+
+        bkg = sep.Background(full_algn)
+        thresh = 3.0 * bkg.globalrms
+        allobjs = sep.extract(full_algn - bkg.back(), thresh)
+        allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
+
+        from scipy.spatial import KDTree
+
+        ref_coordtree = KDTree(self.star_ref_pos)
+
+        # Compare here srcs list with self.star_ref_pos
+        num_sources = 0
+        for asrc in allxy:
+            found_source = ref_coordtree.query_ball_point(asrc, 3)
+            if found_source:
+                num_sources += 1
+        fraction_found = num_sources / len(allxy)
+        return fraction_found
+
     def test_register(self):
-        def compare_image(the_image):
-            """Return the fraction of sources found in the reference image"""
-            # pixel comparison is not good, doesn't work. Compare catalogs.
-            full_algn = the_image.astype("float32")
-            import sep
-
-            bkg = sep.Background(full_algn)
-            thresh = 3.0 * bkg.globalrms
-            allobjs = sep.extract(full_algn - bkg.back(), thresh)
-            allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
-
-            from scipy.spatial import KDTree
-
-            ref_coordtree = KDTree(self.star_ref_pos)
-
-            # Compare here srcs list with self.star_ref_pos
-            num_sources = 0
-            for asrc in allxy:
-                found_source = ref_coordtree.query_ball_point(asrc, 3)
-                if found_source:
-                    num_sources += 1
-            fraction_found = num_sources / len(allxy)
-            return fraction_found
 
         registered_img, footp = aa.register(
             source=self.image, target=self.image_ref
         )
-        self.assertIs(type(registered_img), np.ndarray)
-        self.assertIs(type(footp), np.ndarray)
+        self.assertIsInstance(registered_img, np.ndarray)
+        self.assertIsInstance(footp, np.ndarray)
         self.assertIs(footp.dtype, np.dtype("bool"))
-        fraction = compare_image(registered_img)
+        fraction = self.compare_image(registered_img)
         self.assertGreater(fraction, 0.85)
 
     def test_register_nddata(self):
