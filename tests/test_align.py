@@ -269,7 +269,7 @@ class TestAlign(unittest.TestCase):
                 found_source = ref_coordtree.query_ball_point(asrc, 3)
                 if found_source:
                     num_sources += 1
-            fraction_found = float(num_sources) / float(len(allxy))
+            fraction_found = num_sources / len(allxy)
             return fraction_found
 
         registered_img, footp = aa.register(
