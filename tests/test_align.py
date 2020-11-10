@@ -23,6 +23,9 @@
 import unittest
 import numpy as np
 import astroalign as aa
+from astropy.nddata import NDData
+from ccdproc import CCDData
+from skimage.transform import SimilarityTransform
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -207,6 +210,10 @@ class TestAlign(unittest.TestCase):
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
         )
+        self.image_mask = np.zeros((self.h, self.w), dtype="bool")
+        self.image_ref_mask = np.zeros((self.h, self.w), dtype="bool")
+        self.image_mask[10:30, 70:90] = True
+        self.image_ref_mask[10:30, 20:50] = True
 
     def test_find_transform_givensources(self):
         from skimage.transform import estimate_transform, matrix_transform
@@ -272,7 +279,6 @@ class TestAlign(unittest.TestCase):
         return fraction_found
 
     def test_register(self):
-
         registered_img, footp = aa.register(
             source=self.image, target=self.image_ref
         )
@@ -283,9 +289,52 @@ class TestAlign(unittest.TestCase):
         self.assertGreater(fraction, 0.85)
 
     def test_register_nddata(self):
-        from astropy.nddata import NDData
-        from skimage.transform import SimilarityTransform
+        nd_image = NDData(self.image, mask=self.image_mask)
+        nd_image_ref = NDData(self.image_ref, mask=self.image_ref_mask)
+        registered_img, footp = aa.register(
+            source=nd_image, target=nd_image_ref
+        )
+        self.assertIsInstance(registered_img, np.ndarray)
+        self.assertIsInstance(footp, np.ndarray)
+        self.assertIs(footp.dtype, np.dtype("bool"))
+        fraction = self.compare_image(registered_img)
+        self.assertGreater(fraction, 0.85)
 
+    def test_register_ccddata(self):
+        ccd_image = CCDData(
+            self.image,
+            mask=self.image_mask,
+            meta={"object": "fake galaxy", "filter": "R"},
+            unit="adu",
+        )
+        ccd_image_ref = CCDData(
+            self.image_ref,
+            mask=self.image_ref_mask,
+            meta={"object": "fake galaxy", "filter": "R"},
+            unit="adu",
+        )
+        registered_img, footp = aa.register(
+            source=ccd_image, target=ccd_image_ref
+        )
+        self.assertIsInstance(registered_img, np.ndarray)
+        self.assertIsInstance(footp, np.ndarray)
+        self.assertIs(footp.dtype, np.dtype("bool"))
+        fraction = self.compare_image(registered_img)
+        self.assertGreater(fraction, 0.85)
+
+    def test_register_npma(self):
+        ma_image = np.ma.array(self.image, mask=self.image_mask)
+        ma_image_ref = np.ma.array(self.image_ref, mask=self.image_ref_mask)
+        registered_img, footp = aa.register(
+            source=ma_image, target=ma_image_ref
+        )
+        self.assertIsInstance(registered_img, np.ndarray)
+        self.assertIsInstance(footp, np.ndarray)
+        self.assertIs(footp.dtype, np.dtype("bool"))
+        fraction = self.compare_image(registered_img)
+        self.assertGreater(fraction, 0.85)
+
+    def test_apply_transform_nddata(self):
         transf = SimilarityTransform(rotation=np.pi / 2.0, translation=(1, 0))
 
         nd = NDData(
@@ -313,9 +362,7 @@ class TestAlign(unittest.TestCase):
         err_mask = footp == np.array([[False, False], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
 
-    def test_register_ccddata(self):
-        from ccdproc import CCDData
-        from skimage.transform import SimilarityTransform
+    def test_apply_transform_ccddata(self):
 
         transf = SimilarityTransform(rotation=np.pi / 2.0, translation=(1, 0))
 
@@ -345,7 +392,7 @@ class TestAlign(unittest.TestCase):
         err_mask = footp == np.array([[False, False], [False, False]])
         self.assertTrue(all(err_mask.flatten()))
 
-    def test_register_npma(self):
+    def test_apply_transform_npma(self):
         from skimage.transform import SimilarityTransform
 
         transf = SimilarityTransform(rotation=np.pi / 2.0, translation=(1, 0))

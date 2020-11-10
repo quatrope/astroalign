@@ -197,6 +197,13 @@ class _MatchTransform:
         return error
 
 
+def _data(image):
+    if hasattr(image, "data") and isinstance(image.data, _np.ndarray):
+        return image.data
+    else:
+        return image
+
+
 def find_transform(
     source, target, max_control_points=50, detection_sigma=5, min_area=5
 ):
@@ -234,25 +241,29 @@ def find_transform(
     from scipy.spatial import KDTree
 
     try:
-        if len(source[0]) == 2:
+        if len(_data(source)[0]) == 2:
             # Assume it's a list of (x, y) pairs
             source_controlp = _np.array(source)[:max_control_points]
         else:
             # Assume it's a 2D image
             source_controlp = _find_sources(
-                source, detection_sigma=detection_sigma, min_area=min_area
+                _data(source),
+                detection_sigma=detection_sigma,
+                min_area=min_area,
             )[:max_control_points]
     except Exception:
         raise TypeError("Input type for source not supported.")
 
     try:
-        if len(target[0]) == 2:
+        if len(_data(target)[0]) == 2:
             # Assume it's a list of (x, y) pairs
             target_controlp = _np.array(target)[:max_control_points]
         else:
             # Assume it's a 2D image
             target_controlp = _find_sources(
-                target, detection_sigma=detection_sigma, min_area=min_area
+                _data(target),
+                detection_sigma=detection_sigma,
+                min_area=min_area,
             )[:max_control_points]
     except Exception:
         raise TypeError("Input type for target not supported.")
@@ -361,19 +372,13 @@ def apply_transform(
     """
     from skimage.transform import warp
 
-    if hasattr(source, "data") and isinstance(source.data, _np.ndarray):
-        source_data = source.data
-    else:
-        source_data = source
-    if hasattr(target, "data") and isinstance(target.data, _np.ndarray):
-        target_data = target.data
-    else:
-        target_data = target
+    source_data = _data(source)
+    target_shape = _data(target).shape
 
     aligned_image = warp(
         source_data,
         inverse_map=transform.inverse,
-        output_shape=target_data.shape,
+        output_shape=target_shape,
         order=3,
         mode="constant",
         cval=_np.median(source_data),
@@ -383,7 +388,7 @@ def apply_transform(
     footprint = warp(
         _np.zeros(source_data.shape, dtype="float32"),
         inverse_map=transform.inverse,
-        output_shape=target_data.shape,
+        output_shape=target_shape,
         cval=1.0,
     )
     footprint = footprint > 0.4
@@ -394,7 +399,7 @@ def apply_transform(
             source_mask_rot = warp(
                 source_mask.astype("float32"),
                 inverse_map=transform.inverse,
-                output_shape=target_data.shape,
+                output_shape=target_shape,
                 cval=1.0,
             )
             source_mask_rot = source_mask_rot > 0.4
