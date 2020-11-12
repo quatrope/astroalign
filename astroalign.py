@@ -215,12 +215,12 @@ def find_transform(
     ``T.translation``, ``T.scale``, ``T.params``.
 
     Args:
-        source (array-like): Either a numpy array of the source image to be
-            transformed or an interable of (x, y) coordinates of the target
-            control points.
-        target (array-like): Either a numpy array of the target (destination)
-            image or an interable of (x, y) coordinates of the target
-            control points.
+        source (array-like): Either a NumPy, CCData or NDData array of the
+            source image to be transformed or an interable of (x, y)
+            coordinates of the target control points.
+        target (array-like): Either a NumPy, CCData or NDData array of the
+            target (destination) image or an interable of (x, y) coordinates of
+            the target control points.
         max_control_points: The maximum number of control point-sources to find
             the transformation.
         detection_sigma: Factor of background std-dev above which is considered
@@ -355,10 +355,10 @@ def apply_transform(
 
     Args:
         transform: A scikit-image ``SimilarityTransform`` object.
-        source (numpy array): A 2D numpy array of the source image to be
-            transformed.
-        target (numpy array): A 2D numpy array of the target image. Only used
-            to set the output image shape.
+        source (numpy array): A 2D NumPy, CCData or NDData array of the source
+            image to be transformed.
+        target (numpy array): A 2D NumPy, CCData or NDData array of the target
+            image. Only used to set the output image shape.
         fill_value (float): A value to fill in the areas of aligned_image
             where footprint == True.
         propagate_mask (bool): Wether to propagate the mask in source.mask
@@ -422,10 +422,10 @@ def register(
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
     Args:
-        source (numpy array): A 2D numpy array of the source image to be
-            transformed.
-        target (numpy array): A 2D numpy array of the target image. Used
-            to set the output image shape as well.
+        source (numpy array): A 2D NumPy, CCData or NDData array of the source
+            image to be transformed.
+        target (numpy array): A 2D NumPy, CCData or NDData array of the target
+            image. Used to set the output image shape as well.
         fill_value (float): A value to fill in the areas of aligned_image
             where footprint == True.
         propagate_mask (bool): Wether to propagate the mask in source.mask

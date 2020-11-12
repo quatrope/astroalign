@@ -24,8 +24,9 @@ The usage for this simple most common case would be as follows::
     * If instead of images, you have lists of bright, reference star positions on each image,
       see :ref:`ftransf`.
 
-    * astroalign.register will also accept as input, data objects with `data` and `mask` properties, like NDData, CCDData and Numpy masked arrays.
-      For more information, see :ref:`dataobjs`
+    * ``astroalign.register`` will also accept as input, data objects with ``data`` and ``mask`` properties,
+      like ``NDData``, ``CCDData`` and ``Numpy`` masked arrays.
+      See :ref:`dataobjs`.
 
     * Check this `Jupyter notebook <http://toros-astro.github.io/astroalign/>`_ for a more complete example.
 
@@ -125,21 +126,22 @@ Following the example in the previous section::
 
 .. _dataobjs:
 
-Dealing with Data Objects with data and mask properties (NDData, CCDData, Numpy masked arrays)
-----------------------------------------------------------------------------------------------
+Objects with ``data`` and ``mask`` property
+-------------------------------------------
 
-If your input data comes in the form of `ccdproc <https://ccdproc.readthedocs.io>`_'s
+If your image is stored in objects with ``data`` and ``mask`` properties,
+such as `ccdproc <https://ccdproc.readthedocs.io>`_'s
 `CCDData <http://docs.astropy.org/en/stable/api/astropy.nddata.CCDData.html>`_
 or `astropy <https://www.astropy.org>`_'s
 `NDData <https://docs.astropy.org/en/stable/api/astropy.nddata.NDData.html>`_
-or a `numpy <http://www.numpy.org>`_
-`masked array <https://www.numpy.org/devdocs/reference/maskedarray.generic.html>`_,
-there are a few ways to interact with astroalign.
+or a `NumPy <http://www.numpy.org>`_
+`masked array <https://www.numpy.org/devdocs/reference/maskedarray.generic.html>`_
+you can use them as input for ``register``, ``find_transform`` and ``apply_transform``.
 
-In general, for objects with `data` and `mask` properties, it is convenient to transform their masks
-along with the data and to add the footprint onto the mask.
+In general in these cases it is convenient to transform their masks
+along with the data and to add the ``footprint`` onto the mask.
 
-Astroalign provides this functionality with the `propagate_mask` argument to `register` and `apply_transform`.
+Astroalign provides this functionality with the ``propagate_mask`` argument to ``register`` and ``apply_transform``.
 
 For example::
 
@@ -156,7 +158,8 @@ Then we can call astroalign as usual, but with the `propagate_mask` set to True:
 
     >>> aligned_image, footprint = aa.apply_transform(transf, nd, nd, propagate_mask=True)
 
-This will transform `nd.data` and `nd.mask` simultaneously and add the `footprint` mask from the transformation onto `nd.mask`::
+This will transform ``nd.data`` and ``nd.mask`` simultaneously and add the
+``footprint`` mask from the transformation onto ``nd.mask``::
 
     >>> aligned_image
     array([[2., 0.],
@@ -169,7 +172,7 @@ Creating a new object of the same input type is now easier::
 
     >>> new_nd = NDData(aligned_image, mask=footprint)
 
-The same will apply for CCDData objects and Numpy masked arrays.
+The same will apply for ``CCDData`` objects and ``NumPy`` masked arrays.
 
 ----------------------------------------
 
