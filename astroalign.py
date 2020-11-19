@@ -203,12 +203,18 @@ def _data(image):
     else:
         return image
 
-
 def _bw(image):
     "Return a 2D numpy array for an array of arbitrary channels"
     if image.ndim == 2:
         return image
     return _np.mean(image, axis=-1)
+
+def _shape(image):
+    "Return a 2D shape for the image, ignoring channel info"
+    if image.ndim == 2:
+        return image.shape
+    h, w, ch = image.shape
+    return h, w
 
 
 def find_transform(
@@ -393,8 +399,9 @@ def apply_transform(
         clip=True,
         preserve_range=True,
     )
+
     footprint = warp(
-        _np.zeros(source_data.shape, dtype="float32"),
+        _np.zeros(_shape(source_data), dtype="float32"),
         inverse_map=transform.inverse,
         output_shape=target_shape,
         cval=1.0,

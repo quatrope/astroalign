@@ -26,6 +26,7 @@ import astroalign as aa
 from astropy.nddata import NDData
 from ccdproc import CCDData
 from skimage.transform import SimilarityTransform
+from skimage.transform import estimate_transform, matrix_transform
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -216,7 +217,6 @@ class TestAlign(unittest.TestCase):
         self.image_ref_mask[10:30, 20:50] = True
 
     def test_find_transform_givensources(self):
-        from skimage.transform import estimate_transform, matrix_transform
 
         source = np.array(
             [
@@ -498,7 +498,6 @@ class TestFewSources(unittest.TestCase):
     def check_if_findtransform_ok(self, numstars):
         """Helper function to test find_transform with common test code
         for 3, 4, 5, and 6 stars"""
-        from skimage.transform import estimate_transform, matrix_transform
 
         if numstars > 6:
             raise NotImplementedError
@@ -564,7 +563,6 @@ class TestFewSources(unittest.TestCase):
     def check_if_register_ok(self, numstars):
         """Helper function to test register with common test code
         for 3, 4, 5, and 6 stars"""
-        from skimage.transform import estimate_transform
 
         if numstars > 6:
             raise NotImplementedError
@@ -631,8 +629,8 @@ class TestColorImages(unittest.TestCase):
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
         (
-            schannel_new,
-            schannel_ref,
+            image_new,
+            image_ref,
             self.star_ref_pos,
             self.star_new_pos,
         ) = simulate_image_pair(
@@ -640,35 +638,38 @@ class TestColorImages(unittest.TestCase):
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
         )
-        self.nchannels = 3
-        image_new = []
-        image_ref = []
-        for achannel in range(self.nchannels):
-            image_new.append(schannel_new.copy())
-            image_ref.append(schannel_ref.copy())
-        image_new = np.array(image_new)
-        image_ref = np.array(image_ref)
-        # Move the channel axis to the last position
-        self.image_ref = np.moveaxis(image_ref, 0, -1)
-        self.image_new = np.moveaxis(image_new, 0, -1)
-
-    def test_find_transform_three_channels(self):
-        "Test find_transform works with RGB images"
-        transf, __ = aa.find_transform(
-            source=self.image_new, target=self.image_ref
+        self.image_new = np.array(
+            [image_new.copy(), image_new.copy(), image_new.copy()]
         )
-        transl = (self.x_offset, self.y_offset)
-        translation_error = np.array(transf.translation) - np.array(transl)
-        print("""
+        self.image_ref = np.array(
+            [image_ref.copy(), image_ref.copy(), image_ref.copy()]
+        )
+        self.image_new = np.moveaxis(self.image_new, 0, -1)
+        self.image_ref = np.moveaxis(self.image_ref, 0, -1)
 
+    def compare_image(self, the_image):
+        """Return the fraction of sources found in the reference image"""
+        # pixel comparison is not good, doesn't work. Compare catalogs.
+        full_algn = np.mean(the_image, axis=-1, dtype="float32")
+        import sep
 
-        {}
-        {}
-        
+        bkg = sep.Background(full_algn)
+        thresh = 3.0 * bkg.globalrms
+        allobjs = sep.extract(full_algn - bkg.back(), thresh)
+        allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
 
-            """.format(transl, transf.translation))
-        self.assertTrue(np.linalg.norm(translation_error) < 1E-8)
+        from scipy.spatial import KDTree
 
+        ref_coordtree = KDTree(self.star_ref_pos)
+
+        # Compare here srcs list with self.star_ref_pos
+        num_sources = 0
+        for asrc in allxy:
+            found_source = ref_coordtree.query_ball_point(asrc, 3)
+            if found_source:
+                num_sources += 1
+        fraction_found = num_sources / len(allxy)
+        return fraction_found
 
     def test_register_three_channels(self):
         "Test register works with RGB images"
@@ -676,7 +677,10 @@ class TestColorImages(unittest.TestCase):
             source=self.image_new, target=self.image_ref
         )
         self.assertEqual(registered_img.ndim, self.image_new.ndim)
-
+        fraction = self.compare_image(registered_img)
+        self.assertGreater(fraction, 0.85)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
 
 if __name__ == "__main__":
     unittest.main()
