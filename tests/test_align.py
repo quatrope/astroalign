@@ -638,14 +638,33 @@ class TestColorImages(unittest.TestCase):
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
         )
-        self.image_new = np.array(
+        self.image_rgb_new = np.array(
             [image_new.copy(), image_new.copy(), image_new.copy()]
         )
-        self.image_ref = np.array(
+        self.image_rgb_ref = np.array(
             [image_ref.copy(), image_ref.copy(), image_ref.copy()]
         )
-        self.image_new = np.moveaxis(self.image_new, 0, -1)
-        self.image_ref = np.moveaxis(self.image_ref, 0, -1)
+        self.image_rgb_new = np.moveaxis(self.image_rgb_new, 0, -1)
+        self.image_rgb_ref = np.moveaxis(self.image_rgb_ref, 0, -1)
+
+        self.image_rgba_new = np.array(
+            [
+                image_new.copy(),
+                image_new.copy(),
+                image_new.copy(),
+                255.0 * np.ones(image_new.shape),
+            ]
+        )
+        self.image_rgba_ref = np.array(
+            [
+                image_ref.copy(),
+                image_ref.copy(),
+                image_ref.copy(),
+                255.0 * np.ones(image_new.shape),
+            ]
+        )
+        self.image_rgba_new = np.moveaxis(self.image_rgba_new, 0, -1)
+        self.image_rgba_ref = np.moveaxis(self.image_rgba_ref, 0, -1)
 
     def compare_image(self, the_image):
         """Return the fraction of sources found in the reference image"""
@@ -671,16 +690,28 @@ class TestColorImages(unittest.TestCase):
         fraction_found = num_sources / len(allxy)
         return fraction_found
 
-    def test_register_three_channels(self):
+    def test_register_rgb_channels(self):
         "Test register works with RGB images"
-        registered_img, footp = aa.register(
-            source=self.image_new, target=self.image_ref
+        registered, footp = aa.register(
+            source=self.image_rgb_new, target=self.image_rgb_ref
         )
-        self.assertEqual(registered_img.ndim, self.image_new.ndim)
-        fraction = self.compare_image(registered_img)
+        self.assertEqual(registered.ndim, self.image_rgb_new.ndim)
+        fraction = self.compare_image(registered)
         self.assertGreater(fraction, 0.85)
         self.assertTrue(footp.ndim == 2)
         self.assertTrue(footp.shape == (self.h, self.w))
+
+    def test_register_rgba_channels(self):
+        "Test register works with RGB images"
+        registered, footp = aa.register(
+            source=self.image_rgba_new, target=self.image_rgba_ref
+        )
+        self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
+        fraction = self.compare_image(registered)
+        self.assertGreater(fraction, 0.85)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
+
 
 if __name__ == "__main__":
     unittest.main()
