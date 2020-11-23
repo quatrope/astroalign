@@ -26,6 +26,7 @@ import astroalign as aa
 from astropy.nddata import NDData
 from ccdproc import CCDData
 from skimage.transform import SimilarityTransform
+from skimage.transform import estimate_transform, matrix_transform
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -216,7 +217,6 @@ class TestAlign(unittest.TestCase):
         self.image_ref_mask[10:30, 20:50] = True
 
     def test_find_transform_givensources(self):
-        from skimage.transform import estimate_transform, matrix_transform
 
         source = np.array(
             [
@@ -498,7 +498,6 @@ class TestFewSources(unittest.TestCase):
     def check_if_findtransform_ok(self, numstars):
         """Helper function to test find_transform with common test code
         for 3, 4, 5, and 6 stars"""
-        from skimage.transform import estimate_transform, matrix_transform
 
         if numstars > 6:
             raise NotImplementedError
@@ -564,7 +563,6 @@ class TestFewSources(unittest.TestCase):
     def check_if_register_ok(self, numstars):
         """Helper function to test register with common test code
         for 3, 4, 5, and 6 stars"""
-        from skimage.transform import estimate_transform
 
         if numstars > 6:
             raise NotImplementedError
@@ -621,6 +619,98 @@ class TestFewSources(unittest.TestCase):
 
     def test_register_sixsources(self):
         self.check_if_register_ok(6)
+
+
+class TestColorImages(unittest.TestCase):
+    def setUp(self):
+        self.h = 512  # image height
+        self.w = 512  # image width
+        self.x_offset = 10
+        self.y_offset = -20
+        self.rot_angle = 50.0 * np.pi / 180.0
+        (
+            image_new,
+            image_ref,
+            self.star_ref_pos,
+            self.star_new_pos,
+        ) = simulate_image_pair(
+            shape=(self.h, self.w),
+            translation=(self.x_offset, self.y_offset),
+            rot_angle_deg=50.0,
+        )
+        self.image_rgb_new = np.array(
+            [image_new.copy(), image_new.copy(), image_new.copy()]
+        )
+        self.image_rgb_ref = np.array(
+            [image_ref.copy(), image_ref.copy(), image_ref.copy()]
+        )
+        self.image_rgb_new = np.moveaxis(self.image_rgb_new, 0, -1)
+        self.image_rgb_ref = np.moveaxis(self.image_rgb_ref, 0, -1)
+
+        self.image_rgba_new = np.array(
+            [
+                image_new.copy(),
+                image_new.copy(),
+                image_new.copy(),
+                255.0 * np.ones(image_new.shape),
+            ]
+        )
+        self.image_rgba_ref = np.array(
+            [
+                image_ref.copy(),
+                image_ref.copy(),
+                image_ref.copy(),
+                255.0 * np.ones(image_new.shape),
+            ]
+        )
+        self.image_rgba_new = np.moveaxis(self.image_rgba_new, 0, -1)
+        self.image_rgba_ref = np.moveaxis(self.image_rgba_ref, 0, -1)
+
+    def compare_image(self, the_image):
+        """Return the fraction of sources found in the reference image"""
+        # pixel comparison is not good, doesn't work. Compare catalogs.
+        full_algn = np.mean(the_image, axis=-1, dtype="float32")
+        import sep
+
+        bkg = sep.Background(full_algn)
+        thresh = 3.0 * bkg.globalrms
+        allobjs = sep.extract(full_algn - bkg.back(), thresh)
+        allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
+
+        from scipy.spatial import KDTree
+
+        ref_coordtree = KDTree(self.star_ref_pos)
+
+        # Compare here srcs list with self.star_ref_pos
+        num_sources = 0
+        for asrc in allxy:
+            found_source = ref_coordtree.query_ball_point(asrc, 3)
+            if found_source:
+                num_sources += 1
+        fraction_found = num_sources / len(allxy)
+        return fraction_found
+
+    def test_register_rgb_channels(self):
+        "Test register works with RGB images"
+        registered, footp = aa.register(
+            source=self.image_rgb_new, target=self.image_rgb_ref
+        )
+        self.assertEqual(registered.ndim, self.image_rgb_new.ndim)
+        fraction = self.compare_image(registered)
+        self.assertGreater(fraction, 0.70)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
+
+    def test_register_rgba_channels(self):
+        "Test register works with RGB images"
+        registered, footp = aa.register(
+            source=self.image_rgba_new, target=self.image_rgba_ref
+        )
+        self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
+        fraction = self.compare_image(registered)
+        self.assertGreater(fraction, 0.70)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
 
 
 if __name__ == "__main__":

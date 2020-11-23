@@ -51,11 +51,12 @@ or from this distribution with
 
 In this example `source_image` will be interpolated by a transformation to coincide pixel to pixel with `target_image` and stored in `aligned_image`.
 
-If we are only interested in knowing the transformation and the correspondence of control points in both images, use `find_transform` will return the transformation in a [Scikit-Image](https://scikit-image.org/) SimilarityTransform object and a list of stars in source with the corresponding stars in target.
+If we are only interested in knowing the transformation and the correspondence of control points in both images, use `find_transform` will return the transformation in a [Scikit-Image](https://scikit-image.org/) `SimilarityTransform` object and a list of stars in source with the corresponding stars in target.
 
     >>> transf, (s_list, t_list) = aa.find_transform(source, target)
 
-`source` and `target` can each either be the numpy array of the image, or an iterable of (x, y) pairs of star positions on the image.
+`source` and `target` can each either be the numpy array of the image (grayscale or color),
+or an iterable of (x, y) pairs of star positions on the image.
 
 The returned `transf` object is a scikit-image [`SimilarityTranform`](http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform) object that contains the transformation matrix along with the scale, rotation and translation parameters.
 

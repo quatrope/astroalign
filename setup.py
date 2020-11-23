@@ -68,7 +68,7 @@ with open(README_MD_PATH, "r") as f:
 # THE REQUIREMENTS!
 # =============================================================================
 
-REQUIREMENTS = ["numpy>=1.6.2", "scipy>=0.15", "scikit-image", "sep"]
+REQUIREMENTS = ["numpy>=1.11", "scipy>=0.15", "scikit-image", "sep"]
 
 
 # =============================================================================

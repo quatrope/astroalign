@@ -36,6 +36,32 @@ The usage for this simple most common case would be as follows::
 .. note::
     If your image requires special care see :ref:`examples`.
 
+
+Images with RGB channels
+------------------------
+
+Astroalign can work with color images provided the channel index be the last axis in the array.
+Adding the channel dimension in the last axis of the array is the default behavior for
+`pillow <https://pillow.readthedocs.io>`_
+and `scikit-image <https://scikit-image.org/docs/dev/user_guide/numpy_images.html>`__.
+The transformation is found on the ``mean`` average of all the channels.
+PNG images with RGBA channels work similarly.
+
+Example:
+
+.. code-block:: python
+
+    from PIL import Image
+    import astroalign as aa
+    source = Image.open("source.jpg")
+    target = Image.open("target.jpg")
+    registered, footprint = aa.register(source, target)
+    # Convert back to pillow image if necessary:
+    registered = Image.fromarray(registered.astype("unit8"))
+
+*Pillow may require array to be unsigned 8-bit integer format.*
+
+
 Mask Fill Value
 ---------------
 
@@ -68,7 +94,7 @@ The inputs ``source`` and ``target`` can be either numpy arrays of the image pix
 Having an iterable of (x, y) pairs is especially useful in situations where source detection requires special care.
 In situations like that, source detection can be done separately and the resulting catalogs fed to ``find_transform``.
 
-``find_transform`` returns a `scikit-image <http://scikit-image.org>`_ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
+``find_transform`` returns a `scikit-image <http://scikit-image.org>`__ `SimilarityTransform <http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.SimilarityTransform>`_ object that encapsulates the matrix transformation,
 and the transformation parameters.
 It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on
 the ``target`` image.
