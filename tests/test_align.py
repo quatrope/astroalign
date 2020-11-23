@@ -697,7 +697,7 @@ class TestColorImages(unittest.TestCase):
         )
         self.assertEqual(registered.ndim, self.image_rgb_new.ndim)
         fraction = self.compare_image(registered)
-        self.assertGreater(fraction, 0.85)
+        self.assertGreater(fraction, 0.70)
         self.assertTrue(footp.ndim == 2)
         self.assertTrue(footp.shape == (self.h, self.w))
 
@@ -708,7 +708,7 @@ class TestColorImages(unittest.TestCase):
         )
         self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
         fraction = self.compare_image(registered)
-        self.assertGreater(fraction, 0.85)
+        self.assertGreater(fraction, 0.70)
         self.assertTrue(footp.ndim == 2)
         self.assertTrue(footp.shape == (self.h, self.w))
 
