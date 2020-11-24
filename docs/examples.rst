@@ -41,7 +41,7 @@ as legitimate sources and output the identity transformation.
 We suggest cleaning the image first using `CCDProc's cosmicray_lacosmic <https://ccdproc.readthedocs.io/en/latest/api/ccdproc.cosmicray_lacosmic.html>`_ to clean the image before trying registration::
 
     >>> from ccdproc import cosmicray_lacosmic as lacosmic
-    >>> clean_source = lacosmic(myimage)
+    >>> clean_source, mask = lacosmic(myimage)
     >>> registered_image, footprint = aa.register(clean_source, clean_target, min_area=9)
 
 Another quick fix can be increasing the expected connected pixels in order to
