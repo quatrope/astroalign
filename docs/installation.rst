@@ -7,8 +7,8 @@ The easiest way to install is using pip::
 
 This will install the latest stable version on PyPI.
 
-If you want to use the latest development code from GitHub, clone the `repo <https://github.com/toros-astro/astroalign>`_ on your local machine and install::
+If you want to use the latest development code from GitHub, clone the `repo <https://github.com/quatrope/astroalign>`_ on your local machine and install::
 
-    git clone https://github.com/toros-astro/astroalign
+    git clone https://github.com/quatrope/astroalign
     cd astroalign
-    pip install .
+    pip install -e .

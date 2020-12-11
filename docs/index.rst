@@ -19,7 +19,7 @@ Asterism matching is more robust, and closer to the human way of matching stella
 
 Astroalign can match images of very different fields of view, point-spread functions, seeing and atmospheric conditions.
 
-You can find a Jupyter notebook example with the main features at http://toros-astro.github.io/astroalign.
+You can find a Jupyter notebook example with the main features at http://quatrope.github.io/astroalign.
 
 .. note::
 

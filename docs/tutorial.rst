@@ -28,7 +28,7 @@ The usage for this simple most common case would be as follows::
       like ``NDData``, ``CCDData`` and ``Numpy`` masked arrays.
       See :ref:`dataobjs`.
 
-    * Check this `Jupyter notebook <http://toros-astro.github.io/astroalign/>`_ for a more complete example.
+    * Check this `Jupyter notebook <http://quatrope.github.io/astroalign/>`_ for a more complete example.
 
 .. warning::
     Flux may not be conserved after the transformation.

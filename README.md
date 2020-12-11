@@ -2,11 +2,12 @@
 
 ***
 
-[![Build Status](https://travis-ci.com/toros-astro/astroalign.svg?branch=master)](https://travis-ci.com/toros-astro/astroalign)
-[![Coverage](https://codecov.io/github/toros-astro/astroalign/coverage.svg?branch=master)](https://codecov.io/github/toros-astro/astroalign)
+[![QuatroPe](https://img.shields.io/badge/QuatroPe-Applications-1c5896)](https://quatrope.github.io/)
+[![Build Status](https://travis-ci.com/quatrope/astroalign.svg?branch=master)](https://travis-ci.com/quatrope/astroalign)
+[![Coverage](https://codecov.io/github/quatrope/astroalign/coverage.svg?branch=master)](https://codecov.io/github/quatrope/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
-[![Updates](https://pyup.io/repos/github/toros-astro/astroalign/shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
-[![Python 3](https://pyup.io/repos/github/toros-astro/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/toros-astro/astroalign/)
+[![Updates](https://pyup.io/repos/github/quatrope/astroalign/shield.svg)](https://pyup.io/repos/github/quatrope/astroalign/)
+[![Python 3](https://pyup.io/repos/github/quatrope/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/quatrope/astroalign/)
 [![PyPI](https://img.shields.io/pypi/v/astroalign)](https://pypi.org/project/astroalign/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/astroalign)
 [![ascl:1906.001](https://img.shields.io/badge/ascl-1906.001-blue.svg?colorB=262255)](http://ascl.net/1906.001)
@@ -26,7 +27,7 @@ Astroalign can match images of very different field of view, point-spread functi
 
 It may not work, or work with special care, on images of extended objects with few point-like sources or in very crowded fields.
 
-You can find a Jupyter notebook example with the main features at [http://toros-astro.github.io/astroalign/](http://toros-astro.github.io/astroalign/).
+You can find a Jupyter notebook example with the main features at [http://quatrope.github.io/astroalign/](http://quatrope.github.io/astroalign/).
 
 **Full documentation:** https://astroalign.readthedocs.io/
 
