@@ -263,7 +263,7 @@ class TestAlign(unittest.TestCase):
         import sep
 
         bkg = sep.Background(full_algn)
-        thresh = 3.0 * bkg.globalrms
+        thresh = 5.0 * bkg.globalrms
         allobjs = sep.extract(full_algn - bkg.back(), thresh)
         allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
 
@@ -645,6 +645,9 @@ class TestColorImages(unittest.TestCase):
             shape=(self.h, self.w),
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
+            noise_level=10.0,
+            num_stars=150,
+            star_flux=np.array([1000.0] * 150),
         )
         self.image_rgb_new = np.array(
             [image_new.copy(), image_new.copy(), image_new.copy()]
@@ -703,7 +706,7 @@ class TestColorImages(unittest.TestCase):
         import sep
 
         bkg = sep.Background(full_algn)
-        thresh = 3.0 * bkg.globalrms
+        thresh = 5.0 * bkg.globalrms
         allobjs = sep.extract(full_algn - bkg.back(), thresh)
         allxy = np.array([[obj["x"], obj["y"]] for obj in allobjs])
 
@@ -738,7 +741,7 @@ class TestColorImages(unittest.TestCase):
         )
         self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
         fraction = self.compare_image(registered)
-        self.assertGreater(fraction, 0.70)
+        self.assertGreater(fraction, 0.60)
         self.assertTrue(footp.ndim == 2)
         self.assertTrue(footp.shape == (self.h, self.w))
 
