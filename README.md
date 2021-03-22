@@ -3,7 +3,7 @@
 ***
 
 [![QuatroPe](https://img.shields.io/badge/QuatroPe-Applications-1c5896)](https://quatrope.github.io/)
-[![Build Status](https://travis-ci.com/quatrope/astroalign.svg?branch=master)](https://travis-ci.com/quatrope/astroalign)
+[![unit tests](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml/badge.svg)](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml)
 [![Coverage](https://codecov.io/github/quatrope/astroalign/coverage.svg?branch=master)](https://codecov.io/github/quatrope/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
 [![Updates](https://pyup.io/repos/github/quatrope/astroalign/shield.svg)](https://pyup.io/repos/github/quatrope/astroalign/)
