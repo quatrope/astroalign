@@ -201,7 +201,7 @@ def _data(image):
     if hasattr(image, "data") and isinstance(image.data, _np.ndarray):
         return image.data
     else:
-        return image
+        return _np.asarray(image)
 
 
 def _bw(image):
