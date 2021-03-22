@@ -27,6 +27,8 @@ from astropy.nddata import NDData
 from ccdproc import CCDData
 from skimage.transform import SimilarityTransform
 from skimage.transform import estimate_transform, matrix_transform
+import tempfile
+from PIL import Image
 
 
 def gauss(shape=(11, 11), center=None, sx=2, sy=2):
@@ -623,6 +625,12 @@ class TestFewSources(unittest.TestCase):
 
 class TestColorImages(unittest.TestCase):
     def setUp(self):
+        def convert_to_uint8(sky_arr):
+            sky_max, sky_min = sky_arr.max(), sky_arr.min()
+            sky_arr = (sky_arr - sky_min) * 512 / (sky_max - sky_min)
+            sky_arr = np.clip(sky_arr, 0, 512)
+            return sky_arr.astype("uint8")
+
         self.h = 512  # image height
         self.w = 512  # image width
         self.x_offset = 10
@@ -666,6 +674,28 @@ class TestColorImages(unittest.TestCase):
         self.image_rgba_new = np.moveaxis(self.image_rgba_new, 0, -1)
         self.image_rgba_ref = np.moveaxis(self.image_rgba_ref, 0, -1)
 
+        self.jpgref_fp = tempfile.TemporaryFile()
+        sky_ref = convert_to_uint8(self.image_rgb_ref)
+        Image.fromarray(sky_ref).save(self.jpgref_fp, "jpeg")
+
+        self.jpgnew_fp = tempfile.TemporaryFile()
+        sky_new = convert_to_uint8(self.image_rgb_new)
+        Image.fromarray(sky_new).save(self.jpgnew_fp, "jpeg")
+
+        self.pngref_fp = tempfile.TemporaryFile()
+        sky_ref = convert_to_uint8(self.image_rgba_ref)
+        Image.fromarray(sky_ref).save(self.pngref_fp, "png")
+
+        self.pngnew_fp = tempfile.TemporaryFile()
+        sky_new = convert_to_uint8(self.image_rgba_new)
+        Image.fromarray(sky_new).save(self.pngnew_fp, "png")
+
+    def tearDown(self):
+        self.jpgref_fp.close()
+        self.jpgnew_fp.close()
+        self.pngref_fp.close()
+        self.pngnew_fp.close()
+
     def compare_image(self, the_image):
         """Return the fraction of sources found in the reference image"""
         # pixel comparison is not good, doesn't work. Compare catalogs.
@@ -706,6 +736,26 @@ class TestColorImages(unittest.TestCase):
         registered, footp = aa.register(
             source=self.image_rgba_new, target=self.image_rgba_ref
         )
+        self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
+        fraction = self.compare_image(registered)
+        self.assertGreater(fraction, 0.70)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
+
+    def test_register_jpg_image(self):
+        source = Image.open(self.jpgnew_fp)
+        target = Image.open(self.jpgref_fp)
+        registered, footp = aa.register(source, target)
+        self.assertEqual(registered.ndim, self.image_rgb_new.ndim)
+        fraction = self.compare_image(registered)
+        self.assertGreater(fraction, 0.70)
+        self.assertTrue(footp.ndim == 2)
+        self.assertTrue(footp.shape == (self.h, self.w))
+
+    def test_register_png_image(self):
+        source = Image.open(self.pngnew_fp)
+        target = Image.open(self.pngref_fp)
+        registered, footp = aa.register(source, target)
         self.assertEqual(registered.ndim, self.image_rgba_new.ndim)
         fraction = self.compare_image(registered)
         self.assertGreater(fraction, 0.70)
