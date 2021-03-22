@@ -6,8 +6,6 @@
 [![unit tests](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml/badge.svg)](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml)
 [![Coverage](https://codecov.io/github/quatrope/astroalign/coverage.svg?branch=master)](https://codecov.io/github/quatrope/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
-[![Updates](https://pyup.io/repos/github/quatrope/astroalign/shield.svg)](https://pyup.io/repos/github/quatrope/astroalign/)
-[![Python 3](https://pyup.io/repos/github/quatrope/astroalign/python-3-shield.svg)](https://pyup.io/repos/github/quatrope/astroalign/)
 [![PyPI](https://img.shields.io/pypi/v/astroalign)](https://pypi.org/project/astroalign/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/astroalign)
 [![ascl:1906.001](https://img.shields.io/badge/ascl-1906.001-blue.svg?colorB=262255)](http://ascl.net/1906.001)
