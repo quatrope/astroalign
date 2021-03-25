@@ -332,7 +332,7 @@ def find_transform(
         best_t = inv_model.fit(matches)
         inlier_ind = _np.arange(len(matches))  # All of the indices
     else:
-        best_t, inlier_ind = _ransac_one_elem(
+        best_t, inlier_ind = _ransac(
             matches, inv_model, PIXEL_TOL, min_matches
         )
     triangle_inliers = matches[inlier_ind]
@@ -526,7 +526,7 @@ class MaxIterError(RuntimeError):
     pass
 
 
-def _ransac_one_elem(data, model, thresh, min_matches):
+def _ransac(data, model, thresh, min_matches):
     """fit model parameters to data using the RANSAC algorithm
 
     This implementation written from pseudocode found at
@@ -541,8 +541,7 @@ def _ransac_one_elem(data, model, thresh, min_matches):
     Return:
         bestfit: model parameters which best fit the data (or nil if no good
                   model is found)"""
-    bestfit = None
-    best_inlier_idxs = None
+    good_fit = None
     n_data = data.shape[0]
     all_idxs = _np.arange(n_data)
     _np.random.shuffle(all_idxs)
@@ -551,7 +550,7 @@ def _ransac_one_elem(data, model, thresh, min_matches):
         # Partition indices into two random subsets
         maybe_idxs = all_idxs[iter_i : iter_i + 1]
         test_idxs = list(all_idxs[:iter_i])
-        test_idxs.extend(list(all_idxs[iter_i + 1:]))
+        test_idxs.extend(list(all_idxs[iter_i + 1 :]))
         test_idxs = _np.array(test_idxs)
         maybeinliers = data[maybe_idxs, :]
         test_points = data[test_idxs, :]
@@ -561,64 +560,22 @@ def _ransac_one_elem(data, model, thresh, min_matches):
         also_idxs = test_idxs[test_err < thresh]
         alsoinliers = data[also_idxs, :]
         if len(alsoinliers) >= min_matches:
-            betterdata = _np.concatenate((maybeinliers, alsoinliers))
-            bestfit = model.fit(betterdata)
-            best_inlier_idxs = _np.concatenate((maybe_idxs, also_idxs))
+            good_data = _np.concatenate((maybeinliers, alsoinliers))
+            good_fit = model.fit(good_data)
             break
-    if bestfit is None:
+
+    if good_fit is None:
         raise MaxIterError(
-            "List of matching triangles exhausted before an acceptable transformation was found"
+            "List of matching triangles exhausted before an acceptable "
+            "transformation was found"
         )
 
-    return bestfit, best_inlier_idxs
-
-
-def _ransac(data, model, min_data_points, max_iter, thresh, min_matches):
-    """fit model parameters to data using the RANSAC algorithm
-
-    This implementation written from pseudocode found at
-    http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
-
-    Given:
-        data: a set of data points
-        model: a model that can be fitted to data points
-        min_data_points: the minimum number of data values required to fit the
-            model
-        max_iter: the maximum number of iterations allowed in the algorithm
-        thresh: a threshold value to determine when a data point fits a model
-        min_matches: the min number of matches required to assert that a model
-            fits well to data
-    Return:
-        bestfit: model parameters which best fit the data (or nil if no good
-                  model is found)"""
-    iterations = 0
-    bestfit = None
-    best_inlier_idxs = None
-    n_data = data.shape[0]
-    n = min_data_points
-    all_idxs = _np.arange(n_data)
-
-    while iterations < max_iter:
-        # Partition indices into two random subsets
-        _np.random.shuffle(all_idxs)
-        maybe_idxs, test_idxs = all_idxs[:n], all_idxs[n:]
-        maybeinliers = data[maybe_idxs, :]
-        test_points = data[test_idxs, :]
-        maybemodel = model.fit(maybeinliers)
-        test_err = model.get_error(test_points, maybemodel)
-        # select indices of rows with accepted points
-        also_idxs = test_idxs[test_err < thresh]
-        alsoinliers = data[also_idxs, :]
-        if len(alsoinliers) >= min_matches:
-            betterdata = _np.concatenate((maybeinliers, alsoinliers))
-            bestfit = model.fit(betterdata)
-            best_inlier_idxs = _np.concatenate((maybe_idxs, also_idxs))
-            break
-        iterations += 1
-    if bestfit is None:
-        raise MaxIterError(
-            "Max iterations exceeded while trying to find "
-            "acceptable transformation."
-        )
-
-    return bestfit, best_inlier_idxs
+    better_fit = good_fit
+    for i in range(3):
+        test_err = model.get_error(data, better_fit)
+        better_inlier_idxs = _np.arange(n_data)[test_err < thresh]
+        better_data = data[better_inlier_idxs]
+        better_fit = model.fit(better_data)
+    best_fit = better_fit
+    best_inlier_idxs = better_inlier_idxs
+    return best_fit, best_inlier_idxs

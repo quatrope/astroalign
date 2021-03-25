@@ -488,6 +488,14 @@ class TestAlign(unittest.TestCase):
         # Assert t_list is a subset of target
         self.assertTrue(target_set <= set((x, y) for x, y in target))
 
+    def test_consistent_result(self):
+        t1, __ = aa.find_transform(source=self.image, target=self.image_ref)
+        for i in range(5):
+            t2, __ = aa.find_transform(
+                source=self.image, target=self.image_ref
+            )
+            self.assertLess(np.linalg.norm(t1.params - t2.params), 1e-10)
+
 
 class TestFewSources(unittest.TestCase):
     def setUp(self):
