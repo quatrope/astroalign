@@ -3,7 +3,7 @@
 ***
 
 [![QuatroPe](https://img.shields.io/badge/QuatroPe-Applications-1c5896)](https://quatrope.github.io/)
-[![unit tests](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml/badge.svg)](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml)
+[![unit tests](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml/badge.svg?branch=master)](https://github.com/quatrope/astroalign/actions/workflows/aa-ci.yml)
 [![Coverage](https://codecov.io/github/quatrope/astroalign/coverage.svg?branch=master)](https://codecov.io/github/quatrope/astroalign)
 [![Documentation Status](https://readthedocs.org/projects/astroalign/badge/?version=latest)](http://astroalign.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/astroalign)](https://pypi.org/project/astroalign/)
