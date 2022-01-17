@@ -29,30 +29,50 @@ You can find a Jupyter notebook example with the main features at [http://quatro
 
 **Full documentation:** https://astroalign.readthedocs.io/
 
-***
-
-## Installation
+# Installation
 
 Using setuptools:
 
-    $ pip install astroalign
+```bash
+$ pip install astroalign
+```
 
 or from this distribution with
 
-    $ python setup.py install
+```bash
+$ python setup.py install
+```
 
-***
+## Performance: Optional
 
-## Usage example
+This library is optionally compatible with [bottleneck](https://github.com/pydata/bottleneck) and will offer performance improvements in most cases. Install bottleneck in your project as a peer to astroalign using:
 
-    >>> import astroalign as aa
-    >>> aligned_image, footprint = aa.register(source_image, target_image)
+```bash
+pip install bottleneck
+```
+
+`Astroalign` will pick this optional dependency up and use it's performance improved functions for computing transforms.
+
+## Running Tests
+
+```bash
+python tests/test_align.py
+```
+
+# Usage example
+
+```
+>>> import astroalign as aa
+>>> aligned_image, footprint = aa.register(source_image, target_image)
+```
 
 In this example `source_image` will be interpolated by a transformation to coincide pixel to pixel with `target_image` and stored in `aligned_image`.
 
 If we are only interested in knowing the transformation and the correspondence of control points in both images, use `find_transform` will return the transformation in a [Scikit-Image](https://scikit-image.org/) `SimilarityTransform` object and a list of stars in source with the corresponding stars in target.
 
-    >>> transf, (s_list, t_list) = aa.find_transform(source, target)
+```
+>>> transf, (s_list, t_list) = aa.find_transform(source, target)
+```
 
 `source` and `target` can each either be the numpy array of the image (grayscale or color),
 or an iterable of (x, y) pairs of star positions on the image.
@@ -61,9 +81,7 @@ The returned `transf` object is a scikit-image [`SimilarityTranform`](http://sci
 
 `s_list` and `t_list` are numpy arrays of (x, y) point correspondence between `source` and `target`. `transf` applied to `s_list` will approximately render `t_list`.
 
-***
-
-## Citation
+# Citation
 
 If you use astroalign in a scientific publication, we would appreciate citations to the following [paper](https://www.sciencedirect.com/science/article/pii/S221313372030038X):
 

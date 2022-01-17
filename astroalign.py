@@ -57,6 +57,12 @@ __all__ = [
     "register",
 ]
 
+try:
+    import bottleneck as bn
+except ImportError:
+    HAS_BOTTLENECK = False
+else:
+    HAS_BOTTLENECK = True
 
 import numpy as _np
 from skimage.transform import estimate_transform
@@ -81,6 +87,26 @@ The number of nearest neighbors of a given star (including itself) to construct
 the triangle invariants.
 
 Default: 5
+"""
+
+_default_median = bn.nanmedian if HAS_BOTTLENECK else _np.nanmedian # pragma: no cover
+"""
+Default median function when/if optional bottleneck is available
+"""
+
+_default_average = bn.nanmean if HAS_BOTTLENECK else _np.nanmean # pragma: no cover
+"""
+Default mean function when/if optional bottleneck is available
+"""
+
+_default_sum = bn.nansum if HAS_BOTTLENECK else _np.nansum # pragma: no cover
+"""
+Default sum function when/if optional bottleneck is available
+"""
+
+_default_std = bn.nanstd if HAS_BOTTLENECK else _np.nanstd # pragma: no cover
+"""
+Default std deviation function when/if optional bottleneck is available
 """
 
 
@@ -208,7 +234,7 @@ def _bw(image):
     "Return a 2D numpy array for an array of arbitrary channels"
     if image.ndim == 2:
         return image
-    return _np.mean(image, axis=-1)
+    return _default_average(image, axis=-1)
 
 
 def _shape(image):
@@ -395,7 +421,7 @@ def apply_transform(
         output_shape=target_shape,
         order=3,
         mode="constant",
-        cval=_np.median(source_data),
+        cval=_default_median(source_data),
         clip=True,
         preserve_range=True,
     )
@@ -478,7 +504,7 @@ def _find_sources(img, detection_sigma=5, min_area=5):
     import sep
 
     if isinstance(img, _np.ma.MaskedArray):
-        image = img.filled(fill_value=_np.median(img)).astype("float32")
+        image = img.filled(fill_value=_default_median(img)).astype("float32")
     else:
         image = img.astype("float32")
     bkg = sep.Background(image)
