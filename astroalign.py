@@ -61,6 +61,8 @@ __all__ = [
 import numpy as _np
 from skimage.transform import estimate_transform
 from skimage.transform import matrix_transform
+from astropy.wcs import WCS
+
 
 PIXEL_TOL = 2
 """The pixel distance tolerance to assume two invariant points are the same.
@@ -214,6 +216,74 @@ def estimate_wcs(source, pointing, fov):
         An Astropy WCS object of the field.
     """
     raise NotImplementedError
+
+
+def make_wcs(xypositions, radecpositions):
+    "Return the WCS that maps the (x, y) positions on the image to the provided (RA, Dec)."
+
+    # Convert array of ra, dec into x, y, z
+    ra = radecpositions[:, 0] * _np.pi / 180.0
+    dec = radecpositions[:, 1] * _np.pi / 180.0
+    starxyz = _np.array(
+        [_np.cos(dec) * _np.cos(ra), _np.cos(dec) * _np.sin(ra), _np.sin(dec)]
+    ).T
+
+    # Find center of mass of the stars
+    star_cm = _np.sum(starxyz, axis=0)
+    star_cm = star_cm / _np.linalg.norm(star_cm)
+
+    # project the stars around their center of mass
+    sdotr = starxyz.dot(star_cm)
+    if star_cm[2] == 1.0:
+        x, y = starxyz[:, :2].T / starxyz[:, 2]
+    elif star_cm[2] == -1.0:
+        x, y = starxyz[:, :2].T / starxyz[:, 2]
+        x *= -1.0
+    else:
+        # eta is a vector perpendicular to r pointing in the direction of increasing RA. eta_z = 0 by definition.
+        eta = _np.array([-star_cm[1], star_cm[0], 0])
+        eta = eta / _np.linalg.norm(eta)
+        # xi =  r cross eta, a vector pointing northwards, in direction of increasing DEC
+        xi = _np.cross(star_cm, eta)
+        # project s - r onto eta and xi.  No need to subtract r from s, though,
+        # since eta and xi are orthogonal to r by construction.
+        xy = (_np.array([starxyz.dot(eta), starxyz.dot(xi)]) / sdotr).T
+
+    # compute the center of mass of the projected stars and subtract it out.
+    xy = xy - _np.mean(xy, axis=0)
+
+    # Find center of mass of stars
+    field_cm = _np.mean(xypositions, axis=0)
+    xy_zero_cm = xypositions - field_cm
+
+    # compute the "covariance" between field positions and projected positions of the corresponding stars.
+    cov = xy_zero_cm.T.dot(xy)
+
+    # run SVD
+    U, s, vh = _np.linalg.svd(cov)
+    R = vh.dot(U)
+
+    # compute scale in degrees make the variances equal.
+    scale = _np.linalg.norm(xy) / _np.linalg.norm(xy_zero_cm)
+    scale *= 180.0 / _np.pi
+
+    wcs = WCS()
+    wcs.wcs.cd = R * scale
+    wcs.wcs.crpix = field_cm
+
+    # xyz2radec
+    x, y, z = star_cm
+    ra = _np.arctan2(y, x)
+    if ra < 0:
+        ra += 2.0 * _np.pi
+    dec = _np.arcsin(z)
+
+    # Convert to degrees
+    ra = ra * 180.0 / _np.pi
+    dec = dec * 180.0 / _np.pi
+
+    wcs.wcs.crval = _np.array([ra, dec])
+    return wcs
 
 
 def _data(image):
