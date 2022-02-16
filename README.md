@@ -45,7 +45,8 @@ $ python setup.py install
 
 ## Performance: Optional
 
-This library is optionally compatible with [bottleneck](https://github.com/pydata/bottleneck) and will offer performance improvements in most cases. Install bottleneck in your project as a peer to astroalign using:
+This library is optionally compatible with [bottleneck](https://github.com/pydata/bottleneck) and may offer performance improvements in some cases.
+Install bottleneck in your project as a peer to astroalign using:
 
 ```bash
 pip install bottleneck
