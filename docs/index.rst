@@ -17,7 +17,7 @@ Generic registration routines try to match point features, using corner detectio
 These generally fail for stellar astronomical images, since stars have very little stable structure and so, in general, indistinguishable from each other.
 Asterism matching is more robust, and closer to the human way of matching stellar images.
 
-Astroalign can match images of very different fields of view, point-spread functions, seeing and atmospheric conditions.
+Because of the geometric nature of its core algorithm, it is not greatly effected by point-spread function differences, seeing or atmospheric conditions.
 
 You can find a Jupyter notebook example with the main features at http://quatrope.github.io/astroalign.
 
@@ -28,6 +28,10 @@ You can find a Jupyter notebook example with the main features at http://quatrop
 .. note::
     If your images contain a large number of hot pixels, this may result in an incorrect registration.
     Please refer to the tutorial for how to solve this problem using `CCDProc's cosmic-ray remover <https://ccdproc.readthedocs.io/en/latest/api/ccdproc.cosmicray_lacosmic.html>`_.
+
+.. note::
+    This library is compatible with `bottleneck <https://github.com/pydata/bottleneck>`_ and may offer performance improvements in some cases.
+    `Astroalign` will pick this optional dependency up and use its performance improved ``mean`` and ``median`` functions.
 
 
 Citation

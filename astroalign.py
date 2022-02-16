@@ -89,22 +89,22 @@ the triangle invariants.
 Default: 5
 """
 
-_default_median = bn.nanmedian if HAS_BOTTLENECK else _np.nanmedian # pragma: no cover
+_default_median = bn.nanmedian if HAS_BOTTLENECK else _np.nanmedian  # pragma: no cover
 """
 Default median function when/if optional bottleneck is available
 """
 
-_default_average = bn.nanmean if HAS_BOTTLENECK else _np.nanmean # pragma: no cover
+_default_average = bn.nanmean if HAS_BOTTLENECK else _np.nanmean  # pragma: no cover
 """
 Default mean function when/if optional bottleneck is available
 """
 
-_default_sum = bn.nansum if HAS_BOTTLENECK else _np.nansum # pragma: no cover
+_default_sum = bn.nansum if HAS_BOTTLENECK else _np.nansum  # pragma: no cover
 """
 Default sum function when/if optional bottleneck is available
 """
 
-_default_std = bn.nanstd if HAS_BOTTLENECK else _np.nanstd # pragma: no cover
+_default_std = bn.nanstd if HAS_BOTTLENECK else _np.nanstd  # pragma: no cover
 """
 Default std deviation function when/if optional bottleneck is available
 """
