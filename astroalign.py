@@ -608,7 +608,7 @@ def _ransac(data, model, thresh, min_matches):
         maybe_idxs = all_idxs[iter_i : iter_i + 1]
         test_idxs = list(all_idxs[:iter_i])
         test_idxs.extend(list(all_idxs[iter_i + 1 :]))
-        test_idxs = _np.array(test_idxs)
+        test_idxs = _np.array(test_idxs, dtype="i8")
         maybeinliers = data[maybe_idxs, :]
         test_points = data[test_idxs, :]
         maybemodel = model.fit(maybeinliers)

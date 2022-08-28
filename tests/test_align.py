@@ -631,6 +631,13 @@ class TestFewSources(unittest.TestCase):
     def test_register_sixsources(self):
         self.check_if_register_ok(6)
 
+    def test_three_match_one_off(self):
+        "Test corner case with 1 triangle match + unmatched extra star"
+        source = [(1, 2), (3, 4), (5, 6), (8, 9)]
+        target = [(2, 2), (4, 4), (6, 6), (15, 9)]
+        with self.assertRaises(aa.MaxIterError):
+            aa.find_transform(source, target)
+
 
 class TestColorImages(unittest.TestCase):
     def setUp(self):
