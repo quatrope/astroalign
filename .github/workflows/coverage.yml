@@ -1,0 +1,42 @@
+name: code coverage
+
+on:
+  - push
+  - pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Code Coverage
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install coverage
+        run: pip install coverage
+      - name: Install astroalign dependencies
+        run: pip install "numpy>=1.11" "scipy>=0.15" scikit-image sep
+      - name: Install test dependencies
+        run: pip install -r tests/requirements.txt
+      - name: Run coverage
+        run: |
+          python -m coverage run -m unittest -v
+          coverage xml --fail-under=80 -o coverage.xml
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
