@@ -86,7 +86,7 @@ def run():
         author="Martin Beroiz",
         author_email="martinberoiz@gmail.com",
         url="https://astroalign.readthedocs.io/",
-        py_modules=["astroalign", "ez_setup"],
+        py_modules=["astroalign"],
         install_requires=REQUIREMENTS,
         test_suite="tests",
     )
