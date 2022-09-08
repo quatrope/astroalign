@@ -121,8 +121,8 @@ todo_include_todos = False
 
 # -- Options for Napoleon -------------------------------------------------
 
-napoleon_google_docstring = True
-napoleon_numpy_docstring = False
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
 
 # -- Options for autodoc --------------------------------------------------
 
