@@ -22,8 +22,7 @@
 
 
 """
-ASTROALIGN is a simple package that will try to align two stellar astronomical
-images, especially when there is no WCS information available.
+ASTROALIGN aligns stellar images using no WCS information.
 
 It does so by finding similar 3-point asterisms (triangles) in both images and
 deducing the affine transformation between them.
@@ -111,7 +110,7 @@ Default std deviation function when/if optional bottleneck is available
 
 
 def _invariantfeatures(x1, x2, x3):
-    "Given 3 points x1, x2, x3, return the invariant features for the set."
+    """Given 3 points x1, x2, x3, return the invariant features for the set."""
     sides = _np.sort(
         [
             _np.linalg.norm(x1 - x2),
@@ -123,12 +122,15 @@ def _invariantfeatures(x1, x2, x3):
 
 
 def _arrangetriplet(sources, vertex_indices):
-    """Return vertex_indices ordered in an (a, b, c) form where:
+    """Order vertex_indices according to length side.
+
+    Order in (a, b, c) form Where:
       a is the vertex defined by L1 & L2
       b is the vertex defined by L2 & L3
       c is the vertex defined by L3 & L1
     and L1 < L2 < L3 are the sides of the triangle
-    defined by vertex_indices."""
+    defined by vertex_indices.
+    """
     ind1, ind2, ind3 = vertex_indices
     x1, x2, x3 = sources[vertex_indices]
 
@@ -152,8 +154,10 @@ def _arrangetriplet(sources, vertex_indices):
 
 def _generate_invariants(sources):
     """Return an array of (unique) invariants derived from the array `sources`.
+
     Return an array of the indices of `sources` that correspond to each
-    invariant, arranged as described in _arrangetriplet."""
+    invariant, arranged as described in _arrangetriplet.
+    """
     from scipy.spatial import KDTree
     from itertools import combinations
     from functools import partial
@@ -231,14 +235,14 @@ def _data(image):
 
 
 def _bw(image):
-    "Return a 2D numpy array for an array of arbitrary channels"
+    """Return a 2D numpy array for an array of arbitrary channels."""
     if image.ndim == 2:
         return image
     return _default_average(image, axis=-1)
 
 
 def _shape(image):
-    "Return a 2D shape for the image, ignoring channel info"
+    """Return a 2D shape for the image, ignoring channel info."""
     if image.ndim == 2:
         return image.shape
     h, w, ch = image.shape
@@ -255,29 +259,37 @@ def find_transform(
     T contains parameters of the tranformation: ``T.rotation``,
     ``T.translation``, ``T.scale``, ``T.params``.
 
-    Args:
-        source (array-like): Either a NumPy, CCData or NDData array of the
-            source image to be transformed or an interable of (x, y)
-            coordinates of the target control points.
-        target (array-like): Either a NumPy, CCData or NDData array of the
-            target (destination) image or an interable of (x, y) coordinates of
-            the target control points.
-        max_control_points: The maximum number of control point-sources to find
-            the transformation.
-        detection_sigma: Factor of background std-dev above which is considered
-            a detection. This value is ignored if input are not images.
-        min_area: Minimum number of connected pixels to be considered a source.
+    Parameters
+    ----------
+        source
+            A 2D NumPy, CCData or NDData array of the source image to be transformed
+            or an interable of (x, y) coordinates of the source control points.
+        target
+            A 2D NumPy, CCData or NDData array of the target (destination) image
+            or an interable of (x, y) coordinates of the target control points.
+        max_control_points
+            The maximum number of control point-sources to find the transformation.
+        detection_sigma : int
+            Factor of background std-dev above which is considered a detection.
+            This value is ignored if input are not images.
+        min_area : int
+            Minimum number of connected pixels to be considered a source.
             This value is ignored if input are not images.
 
-    Returns:
-        The transformation object and a tuple of corresponding star positions
-        in source and target.::
+    Returns
+    -------
+        T, (source_pos_array, target_pos_array)
+            The transformation object and a tuple of corresponding star positions
+            in source and target.
 
-            T, (source_pos_array, target_pos_array)
-
-    Raises:
-        TypeError: If input type of ``source`` or ``target`` is not supported.
-        ValueError: If it cannot find more than 3 stars on any input.
+    Raises
+    ------
+        TypeError
+            If input type of ``source`` or ``target`` is not supported.
+        ValueError
+            If it cannot find more than 3 stars on any input.
+        MaxIterError
+            If no transformation is found.
     """
     from scipy.spatial import KDTree
 
@@ -389,26 +401,30 @@ def find_transform(
 def apply_transform(
     transform, source, target, fill_value=None, propagate_mask=False
 ):
-    """Applies the transformation ``transform`` to ``source``.
+    """Apply the transformation ``transform`` to ``source``.
 
     The output image will have the same shape as ``target``.
 
-    Args:
-        transform: A scikit-image ``SimilarityTransform`` object.
-        source (numpy array): A 2D NumPy, CCData or NDData array of the source
-            image to be transformed.
-        target (numpy array): A 2D NumPy, CCData or NDData array of the target
-            image. Only used to set the output image shape.
-        fill_value (float): A value to fill in the areas of aligned_image
-            where footprint == True.
-        propagate_mask (bool): Wether to propagate the mask in source.mask
-            onto footprint.
+    Parameters
+    ----------
+        transform
+            A scikit-image ``SimilarityTransform`` object.
+        source
+            A 2D NumPy, CCData or NDData array of the source image to be transformed.
+        target
+            A 2D NumPy, CCData or NDData array of the target image.
+            Only used to set the output image shape.
+        fill_value : float
+            A value to fill in the areas of aligned_image where footprint == True.
+        propagate_mask : bool
+            Wether to propagate the mask in source.mask onto footprint.
 
-    Return:
-        A tuple (aligned_image, footprint).
-        aligned_image is a numpy 2D array of the transformed source
-        footprint is a mask 2D array with True on the regions
-        with no pixel information.
+    Returns
+    -------
+        aligned_image, footprint
+            ``aligned_image`` is a numpy 2D array of the transformed source.
+            ``footprint`` is a mask 2D array with True on the regions with no pixel
+            information.
     """
     from skimage.transform import warp
 
@@ -462,28 +478,39 @@ def register(
 ):
     """Transform ``source`` to coincide pixel to pixel with ``target``.
 
-    Args:
-        source (numpy array): A 2D NumPy, CCData or NDData array of the source
-            image to be transformed.
-        target (numpy array): A 2D NumPy, CCData or NDData array of the target
-            image. Used to set the output image shape as well.
-        fill_value (float): A value to fill in the areas of aligned_image
-            where footprint == True.
-        propagate_mask (bool): Wether to propagate the mask in source.mask
-            onto footprint.
-        max_control_points: The maximum number of control point-sources to find
-            the transformation.
-        detection_sigma: Factor of background std-dev above which is considered
-            a detection.
-        min_area: Minimum number of connected pixels to be considered a source.
+    Parameters
+    ----------
+        source
+            A 2D NumPy, CCData or NDData array of the source image to be transformed.
+        target
+            A 2D NumPy, CCData or NDData array of the target image.
+            Used to set the output image shape as well.
+        fill_value
+            A value to fill in the areas of aligned_image where footprint == True.
+        propagate_mask : bool
+            Wether to propagate the mask in source.mask onto footprint.
+        max_control_points
+            The maximum number of control point-sources to find the transformation.
+        detection_sigma : int
+            Factor of background std-dev above which is considered a detection.
+        min_area : int
+            Minimum number of connected pixels to be considered a source.
 
-    Return:
-        A tuple (aligned_image, footprint).
-        aligned_image is a numpy 2D array of the transformed source
-        footprint is a mask 2D array with True on the regions
-        with no pixel information.
+    Returns
+    -------
+        aligned_image, footprint
+            ``aligned_image`` is a numpy 2D array of the transformed source.
+            ``footprint`` is a mask 2D array with True on the regions with no pixel
+            information.
 
-
+    Raises
+    ------
+        TypeError
+            If input type of ``source`` or ``target`` is not supported.
+        ValueError
+            If it cannot find more than 3 stars on any input.
+        MaxIterError
+            If no transformation is found.
     """
     t, __ = find_transform(
         source=source,
@@ -499,8 +526,7 @@ def register(
 
 
 def _find_sources(img, detection_sigma=5, min_area=5):
-    "Return sources (x, y) sorted by brightness."
-
+    """Return sources (x, y) sorted by brightness."""
     import sep
 
     if isinstance(img, _np.ma.MaskedArray):
@@ -549,24 +575,29 @@ def _find_sources(img, detection_sigma=5, min_area=5):
 
 
 class MaxIterError(RuntimeError):
+    """Raise if maximum iterations reached."""
+
     pass
 
 
 def _ransac(data, model, thresh, min_matches):
-    """fit model parameters to data using the RANSAC algorithm
+    """Fit model parameters to data using the RANSAC algorithm.
 
     This implementation written from pseudocode found at
     http://en.wikipedia.org/w/index.php?title=RANSAC&oldid=116358182
 
-    Given:
+    Parameters
+    ----------
         data: a set of data points
         model: a model that can be fitted to data points
         thresh: a threshold value to determine when a data point fits a model
         min_matches: the min number of matches required to assert that a model
             fits well to data
-    Return:
+    Returns
+    -------
         bestfit: model parameters which best fit the data (or nil if no good
-                  model is found)"""
+                  model is found)
+    """
     good_fit = None
     n_data = data.shape[0]
     all_idxs = _np.arange(n_data)
