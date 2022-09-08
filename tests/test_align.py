@@ -203,6 +203,7 @@ class TestAlign(unittest.TestCase):
         self.x_offset = 10
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
+        np.random.seed(433886085)
         (
             self.image,
             self.image_ref,
@@ -518,7 +519,7 @@ class TestFewSources(unittest.TestCase):
         self.num_stars = numstars
         # Fluxes of stars
         self.star_f = np.array(numstars * [700.0])
-
+        np.random.seed(923010207)
         (
             self.image,
             self.image_ref,
@@ -583,7 +584,7 @@ class TestFewSources(unittest.TestCase):
         self.num_stars = numstars
         # Fluxes of stars
         self.star_f = np.array(numstars * [700.0])
-
+        np.random.seed(841890526)
         (
             self.image,
             self.image_ref,
@@ -644,6 +645,7 @@ class TestColorImages(unittest.TestCase):
         self.x_offset = 10
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
+        np.random.seed(532961203)
         (
             image_new,
             image_ref,
