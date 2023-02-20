@@ -64,8 +64,27 @@ else:
     HAS_BOTTLENECK = True
 
 import numpy as _np
-from skimage.transform import estimate_transform
-from skimage.transform import matrix_transform
+
+
+def estimate_transform(*args, **kwargs):
+    """Lazy-loader function for skimage.transform.estimate_transform.
+
+    Full documentation:
+    https://scikit-image.org/docs/stable/api/skimage.transform.html#skimage.transform.estimate_transform
+    """
+    from skimage.transform import estimate_transform
+    return estimate_transform(*args, **kwargs)
+
+
+def matrix_transform(*args, **kwargs):
+    """Lazy-loader function for skimage.transform.matrix_transform.
+
+    Full documentation:
+    https://scikit-image.org/docs/stable/api/skimage.transform.html#skimage.transform.matrix_transform
+    """
+    from skimage.transform import matrix_transform
+    return matrix_transform(*args, **kwargs)
+
 
 PIXEL_TOL = 2
 """The pixel distance tolerance to assume two invariant points are the same.
