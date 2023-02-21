@@ -1,4 +1,4 @@
-<img src="docs/aa_bw.jpg" height="150" alt="Astroalign"/>
+![logo](docs/logo-inline-dark-light.png)
 
 ***
 

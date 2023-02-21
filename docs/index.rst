@@ -1,6 +1,6 @@
 .. _index:
 
-.. image:: aa_bw.jpg
+.. image:: logo-seal-dark-light.png
     :width: 200px
     :align: left
 
