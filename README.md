@@ -82,6 +82,17 @@ The returned `transf` object is a scikit-image [`SimilarityTranform`](http://sci
 
 `s_list` and `t_list` are numpy arrays of (x, y) point correspondence between `source` and `target`. `transf` applied to `s_list` will approximately render `t_list`.
 
+# Related Software
+
+There are other related software that may offer similar functionality as astroalign.
+This list is not exhaustive and may be others.
+
+* [astrometry.net](https://github.com/dstndstn/astrometry.net)
+* [reproject](https://github.com/astropy/reproject)
+* [Watney Astrometry Engine](https://github.com/Jusas/WatneyAstrometry)
+* [Stellar Solver](https://github.com/rlancaste/stellarsolver)
+* [Montage](https://github.com/Caltech-IPAC/Montage)
+
 # Citation
 
 If you use astroalign in a scientific publication, we would appreciate citations to the following [paper](https://www.sciencedirect.com/science/article/pii/S221313372030038X):
