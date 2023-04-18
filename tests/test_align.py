@@ -55,8 +55,10 @@ def simulate_image_pair(
     star_refx=None,
     star_refy=None,
     star_flux=None,
+    random_seed=None,
 ):
     from scipy import signal
+    rng = np.random.default_rng(seed=random_seed)
 
     h, w = shape  # image height and width
     kh, kw = kshape  # kernel height and width
@@ -68,26 +70,26 @@ def simulate_image_pair(
 
     big_r = 0.5 * np.sqrt(h ** 2 + w ** 2) + max(abs(x_offset), abs(y_offset))
 
-    image_ref = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+    image_ref = rng.poisson(noise_level, size=(h + kh, w + kw)).astype(
         "float64"
     )
-    image = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+    image = rng.poisson(noise_level, size=(h + kh, w + kw)).astype(
         "float64"
     )
 
     # x and y of stars in the ref frame (int's)
     if star_refx is None:
-        star_refx = np.random.randint(
+        star_refx = rng.integers(
             low=int(-big_r) + w / 2, high=int(big_r) + w / 2, size=(num_stars,)
         )
     if star_refy is None:
-        star_refy = np.random.randint(
+        star_refy = rng.integers(
             low=int(-big_r) + h / 2, high=int(big_r) + h / 2, size=(num_stars,)
         )
     # Fluxes of stars
     if star_flux is None:
         a, m = 0.8, 3.0 * image_ref.std()  # This are Pareto dist coeff's
-        star_flux = (1.0 + np.random.pareto(a, num_stars)) * m
+        star_flux = (1.0 + rng.pareto(a, num_stars)) * m
 
     # inframe will contain the stars in the reference image
     inframe = []
@@ -148,8 +150,10 @@ def simulate_image_single(
     star_refx=None,
     star_refy=None,
     star_flux=None,
+    random_seed=None,
 ):
     from scipy import signal
+    rng = np.random.default_rng(seed=random_seed)
 
     h, w = shape  # image height and width
     kh, kw = kshape  # kernel height and width
@@ -158,23 +162,23 @@ def simulate_image_single(
     big_r = 0.5 * np.sqrt(h ** 2 + w ** 2)
 
     # Sky background
-    image = np.random.poisson(noise_level, size=(h + kh, w + kw)).astype(
+    image = rng.poisson(noise_level, size=(h + kh, w + kw)).astype(
         "float64"
     )
 
     # x and y of stars in the ref frame (int's)
     if star_refx is None:
-        star_refx = np.random.randint(
+        star_refx = rng.integers(
             low=int(-big_r) + w / 2, high=int(big_r) + w / 2, size=(num_stars,)
         )
     if star_refy is None:
-        star_refy = np.random.randint(
+        star_refy = rng.integers(
             low=int(-big_r) + h / 2, high=int(big_r) + h / 2, size=(num_stars,)
         )
     # Fluxes of stars
     if star_flux is None:
         a, m = 0.8, 3.0 * image.std()  # This are Pareto dist coeff's
-        star_flux = (1.0 + np.random.pareto(a, num_stars)) * m
+        star_flux = (1.0 + rng.pareto(a, num_stars)) * m
 
     # inframe will contain the stars in the reference image
     inframe = []
@@ -203,7 +207,6 @@ class TestAlign(unittest.TestCase):
         self.x_offset = 10
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
-        np.random.seed(433886085)
         (
             self.image,
             self.image_ref,
@@ -213,6 +216,7 @@ class TestAlign(unittest.TestCase):
             shape=(self.h, self.w),
             translation=(self.x_offset, self.y_offset),
             rot_angle_deg=50.0,
+            random_seed=433886085,
         )
         self.image_mask = np.zeros((self.h, self.w), dtype="bool")
         self.image_ref_mask = np.zeros((self.h, self.w), dtype="bool")
@@ -243,7 +247,7 @@ class TestAlign(unittest.TestCase):
         t_true = estimate_transform("similarity", source, dest)
 
         # disorder dest points so they don't match the order of source
-        np.random.shuffle(dest)
+        np.random.default_rng().shuffle(dest)
 
         t, (src_pts, dst_pts) = aa.find_transform(source, dest)
         self.assertLess(t_true.scale - t.scale, 1e-10)
@@ -457,7 +461,7 @@ class TestAlign(unittest.TestCase):
     def test_consistent_invert(self):
         t, __ = aa.find_transform(self.image, self.image_ref)
         tinv, __ = aa.find_transform(self.image_ref, self.image)
-        rpoint = np.random.rand(3) * self.h
+        rpoint = np.random.default_rng().random(3) * self.h
         rpoint[2] = 1.0
         rtransf = tinv.params.dot(t.params.dot(rpoint))
         err = np.linalg.norm(rpoint - rtransf) / np.linalg.norm(rpoint)
@@ -519,7 +523,6 @@ class TestFewSources(unittest.TestCase):
         self.num_stars = numstars
         # Fluxes of stars
         self.star_f = np.array(numstars * [700.0])
-        np.random.seed(923010207)
         (
             self.image,
             self.image_ref,
@@ -533,6 +536,7 @@ class TestFewSources(unittest.TestCase):
             star_refx=self.star_refx,
             star_refy=self.star_refy,
             star_flux=self.star_f,
+            random_seed=923010207,
         )
 
         source = self.star_ref_pos
@@ -540,7 +544,7 @@ class TestFewSources(unittest.TestCase):
         t_true = estimate_transform("similarity", source, dest)
 
         # disorder dest points so they don't match the order of source
-        np.random.shuffle(dest)
+        np.random.default_rng().shuffle(dest)
 
         t, (src_pts, dst_pts) = aa.find_transform(source, dest)
         self.assertLess(t_true.scale - t.scale, 1e-10)
@@ -584,7 +588,6 @@ class TestFewSources(unittest.TestCase):
         self.num_stars = numstars
         # Fluxes of stars
         self.star_f = np.array(numstars * [700.0])
-        np.random.seed(841890526)
         (
             self.image,
             self.image_ref,
@@ -599,6 +602,7 @@ class TestFewSources(unittest.TestCase):
             star_refx=self.star_refx,
             star_refy=self.star_refy,
             star_flux=self.star_f,
+            random_seed=841890526,
         )
 
         aligned, footprint = aa.register(self.image_ref, self.image)
@@ -652,7 +656,6 @@ class TestColorImages(unittest.TestCase):
         self.x_offset = 10
         self.y_offset = -20
         self.rot_angle = 50.0 * np.pi / 180.0
-        np.random.seed(532961203)
         (
             image_new,
             image_ref,
@@ -665,6 +668,7 @@ class TestColorImages(unittest.TestCase):
             noise_level=10.0,
             num_stars=150,
             star_flux=np.array([1000.0] * 150),
+            random_seed=532961203,
         )
         self.image_rgb_new = np.array(
             [image_new.copy(), image_new.copy(), image_new.copy()]

@@ -620,7 +620,7 @@ def _ransac(data, model, thresh, min_matches):
     good_fit = None
     n_data = data.shape[0]
     all_idxs = _np.arange(n_data)
-    _np.random.shuffle(all_idxs)
+    _np.random.default_rng().shuffle(all_idxs)
 
     for iter_i in range(n_data):
         # Partition indices into two random subsets
