@@ -1,4 +1,4 @@
-![logo](docs/logo-inline-dark-light.png)
+![logo](docs/images/logo-inline-dark-light.png)
 
 ***
 

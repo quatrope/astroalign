@@ -1,6 +1,6 @@
 .. _index:
 
-.. image:: logo-seal-dark-light.png
+.. image:: images/logo-seal-dark-light.png
     :width: 200px
     :align: left
 
@@ -87,6 +87,7 @@ Guide:
 
    installation
    tutorial
+   mask
    examples
    api
 

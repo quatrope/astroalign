@@ -42,7 +42,7 @@ functions, seeing and atmospheric conditions.
 """
 
 
-__version__ = "2.4.2"
+__version__ = "2.4.2dev2"
 
 __all__ = [
     "MIN_MATCHES_FRACTION",
@@ -258,7 +258,11 @@ def _data(image):
 def _mask(image):
     """Return a 2D numpy mask array if any, or None if there is no mask."""
     if hasattr(image, "mask"):
-        return _np.asarray(image.mask)
+        the_np_mask = _np.asarray(image.mask)
+        if the_np_mask.ndim == 2:
+            return the_np_mask
+        else:
+            return _np.logical_or.reduce(the_np_mask, axis=-1)
     return None
 
 
