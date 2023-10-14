@@ -91,7 +91,10 @@ This list is not exhaustive and may be others.
 * [reproject](https://github.com/astropy/reproject)
 * [Watney Astrometry Engine](https://github.com/Jusas/WatneyAstrometry)
 * [Stellar Solver](https://github.com/rlancaste/stellarsolver)
+* [THRASTRO](https://github.com/THRASTRO/astrometrylib)
 * [Montage](https://github.com/Caltech-IPAC/Montage)
+* [Aafitrans](https://github.com/prajwel/aafitrans)
+* [astrometry](https://github.com/neuromorphicsystems/astrometry)
 
 # Citation
 
