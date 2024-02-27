@@ -99,7 +99,7 @@ and the transformation parameters.
 It will also return a tuple with two lists of star positions of ``source`` and its corresponding ordered star postions on
 the ``target`` image.
 
-The transformation parameters can be found in ``transf.rotation``, ``transf.traslation``, ``transf.scale``
+The transformation parameters can be found in ``transf.rotation``, ``transf.translation``, ``transf.scale``
 and the transformation matrix in ``transf.params``.
 
 If the transformation is satisfactory, we can apply it to the image with ``apply_transform``.
