@@ -461,21 +461,20 @@ def apply_transform(
             information.
     """
     from skimage.transform import warp
+    import cv2
 
     source_data = _data(source)
     target_shape = _data(target).shape
 
-    aligned_image = warp(
+    aligned_image = cv2.warpAffine(
         source_data,
-        inverse_map=transform.inverse,
-        output_shape=target_shape,
-        order=3,
-        mode="constant",
-        cval=_default_median(source_data),
-        clip=True,
-        preserve_range=True,
+        transform.params[:2, :3],
+        target_shape[:2],
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=_default_median(source_data),
+        flags=cv2.INTER_LANCZOS4,
     )
-
+    
     footprint = warp(
         _np.zeros(_shape(source_data), dtype="float32"),
         inverse_map=transform.inverse,
