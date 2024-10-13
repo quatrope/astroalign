@@ -14,10 +14,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
-      - name: Set up Python 3.9
+      - name: Set up Python
         uses: actions/setup-python@main
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Install coverage
         run: pip install coverage
       - name: Install astroalign dependencies

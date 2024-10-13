@@ -9,7 +9,7 @@ description = "Astrometric Alignment of Images"
 maintainers = [{ name = "Martin Beroiz", email = "martinberoiz@gmail.com" }]
 readme = "README.md"
 dynamic = ["version"]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = ["numpy>=1.17", "scipy>=0.15", "scikit-image", "sep-pjw"]
 license = { file = "LICENSE.txt" }
 keywords = [
