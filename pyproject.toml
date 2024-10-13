@@ -20,10 +20,6 @@ keywords = [
     "stellar-astronomical-images"
 ]
 
-
-[project.optional-dependencies]
-bottleneck = ["bottleneck"]
-
 [project.urls]
 homepage = "https://astroalign.quatrope.org"
 documentation = "https://astroalign.readthedocs.io/"
