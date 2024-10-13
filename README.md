@@ -43,17 +43,6 @@ or from this distribution with
 $ python setup.py install
 ```
 
-## Performance: Optional
-
-This library is optionally compatible with [bottleneck](https://github.com/pydata/bottleneck) and may offer performance improvements in some cases.
-Install bottleneck in your project as a peer to astroalign using:
-
-```bash
-pip install bottleneck
-```
-
-`Astroalign` will pick this optional dependency up and use it's performance improved functions for computing transforms.
-
 ## Running Tests
 
 ```bash
