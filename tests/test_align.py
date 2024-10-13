@@ -265,7 +265,7 @@ class TestAlign(unittest.TestCase):
         """Return the fraction of sources found in the reference image"""
         # pixel comparison is not good, doesn't work. Compare catalogs.
         full_algn = the_image.astype("float32")
-        import sep
+        import sep_pjw as sep
 
         bkg = sep.Background(full_algn)
         thresh = 5.0 * bkg.globalrms
@@ -724,7 +724,7 @@ class TestColorImages(unittest.TestCase):
         """Return the fraction of sources found in the reference image"""
         # pixel comparison is not good, doesn't work. Compare catalogs.
         full_algn = np.mean(the_image, axis=-1, dtype="float32")
-        import sep
+        import sep_pjw as sep
 
         bkg = sep.Background(full_algn)
         thresh = 5.0 * bkg.globalrms
