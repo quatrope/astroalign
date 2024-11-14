@@ -23,7 +23,7 @@ keywords = [
 [project.urls]
 homepage = "https://astroalign.quatrope.org"
 documentation = "https://astroalign.readthedocs.io/"
-repository = "https://github.com/quatrope/astroalign"
+source = "https://github.com/quatrope/astroalign"
 
 [tool.setuptools]
 py-modules = ["astroalign"]
