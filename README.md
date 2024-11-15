@@ -31,22 +31,22 @@ You can find a Jupyter notebook example with the main features at [http://quatro
 
 # Installation
 
-Using setuptools:
+Install from PyPI
 
 ```bash
 $ pip install astroalign
-```
-
-or from this distribution with
-
-```bash
-$ python setup.py install
 ```
 
 ## Running Tests
 
 ```bash
 python tests/test_align.py
+```
+
+or using pytest:
+
+```bash
+pytest -v
 ```
 
 # Usage example
@@ -94,7 +94,5 @@ If you use astroalign in a scientific publication, we would appreciate citations
     Astronomy & Computing, Volume 32, July 2020, 100384.
 
 ***
-
-TOROS Dev Team
 
 <martinberoiz@gmail.com>
