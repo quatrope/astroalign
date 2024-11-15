@@ -1,10 +1,4 @@
-# Include the README
-include README.md
-
-# Include the license file
-include LICENSE.txt
-
 # Include logo file for README
 include docs/aa_bw.jpg
-include docs/logo-inline-dark-light.png
-include docs/logo-seal-dark-light.png
+include docs/images/logo-inline-dark-light.png
+include docs/images/logo-seal-dark-light.png
