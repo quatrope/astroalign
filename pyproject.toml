@@ -27,6 +27,8 @@ source = "https://github.com/quatrope/astroalign"
 
 [tool.setuptools]
 py-modules = ["astroalign"]
+# Ref: https://github.com/pypa/setuptools/issues/4759
+license-files = []
 
 [tool.setuptools.dynamic]
 version = {attr = "astroalign.__version__"}
