@@ -17,11 +17,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@main
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install coverage
         run: pip install coverage
       - name: Install astroalign dependencies
-        run: pip install "numpy>=1.11" "scipy>=0.15" scikit-image sep-pjw
+        run: pip install numpy scipy scikit-image "sep>=1.4.0"
       - name: Install test dependencies
         run: pip install -r tests/requirements.txt
       - name: Run coverage

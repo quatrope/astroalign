@@ -534,7 +534,7 @@ def register(
 
 def _find_sources(img, detection_sigma=5, min_area=5, mask=None):
     """Return sources (x, y) sorted by brightness."""
-    import sep_pjw as sep
+    import sep
 
     image = img.astype("float32")
     bkg = sep.Background(image, mask=mask)
