@@ -231,6 +231,8 @@ def _data(image):
 def _mask(image):
     """Return a 2D numpy mask array if any, or None if there is no mask."""
     if hasattr(image, "mask"):
+        if image.mask is None or image.mask is _np.ma.nomask:
+            return None
         the_np_mask = _np.asarray(image.mask)
         if the_np_mask.ndim == 2:
             return the_np_mask

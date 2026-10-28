@@ -787,5 +787,25 @@ class TestColorImages(unittest.TestCase):
         self.assertTrue(footp.shape == (self.h, self.w))
 
 
+class TestDefaultMask(unittest.TestCase):
+    def test_find_transform_with_default_nomask(self):
+        yy, xx = np.indices((64, 64))
+        image = np.random.default_rng(17).normal(0, 1, (64, 64))
+        for x, y in ((12, 16), (25, 45), (45, 30)):
+            image += 100 * np.exp(-((xx - x) ** 2 + (yy - y) ** 2) / 4)
+        target = np.roll(image, (3, 4), axis=(0, 1))
+        for mask_source, mask_target in ((True, False), (False, True),
+                                         (True, True)):
+            with self.subTest(source=mask_source, target=mask_target):
+                source = np.ma.array(image) if mask_source else image
+                destination = np.ma.array(target) if mask_target else target
+                transform, _ = aa.find_transform(source, destination)
+                np.testing.assert_allclose(
+                    transform.translation, (4, 3), atol=0.02
+                )
+                np.testing.assert_allclose(transform.scale, 1, atol=0.001)
+                np.testing.assert_allclose(transform.rotation, 0, atol=0.001)
+
+
 if __name__ == "__main__":
     unittest.main()
