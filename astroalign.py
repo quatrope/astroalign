@@ -459,7 +459,7 @@ def apply_transform(
 
     source_mask = _mask(source)
     if source_mask is not None and propagate_mask:
-        if source_mask.shape == source_data.shape:
+        if source_mask.shape == _shape(source_data):
             source_mask_rot = warp(
                 source_mask.astype("float32"),
                 inverse_map=transform.inverse,

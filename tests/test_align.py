@@ -787,5 +787,34 @@ class TestColorImages(unittest.TestCase):
         self.assertTrue(footp.shape == (self.h, self.w))
 
 
+class TestColorMask(unittest.TestCase):
+    def test_apply_transform_propagates_color_mask(self):
+        transform = SimilarityTransform(translation=(1, 0))
+        for channels in (3, 4):
+            data = np.arange(6 * 7 * channels, dtype=float).reshape(
+                6, 7, channels
+            )
+            mask = np.zeros(data.shape, dtype=bool)
+            mask[2, 3, 0] = True
+            mask[3, 2, -1] = True
+            expected = np.zeros((6, 7), dtype=bool)
+            expected[:, 0] = True
+            expected[2, 4] = True
+            expected[3, 3] = True
+            for container in (np.ma.array, NDData):
+                with self.subTest(channels=channels, container=container):
+                    source = container(data, mask=mask)
+                    aligned, footprint = aa.apply_transform(
+                        transform, source, data, fill_value=-99,
+                        propagate_mask=True,
+                    )
+                    np.testing.assert_array_equal(footprint, expected)
+                    np.testing.assert_array_equal(aligned[expected], -99)
+                    np.testing.assert_allclose(
+                        aligned[:, 1:][~expected[:, 1:]],
+                        data[:, :-1][~expected[:, 1:]],
+                    )
+
+
 if __name__ == "__main__":
     unittest.main()
